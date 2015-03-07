@@ -28,6 +28,15 @@ func (db *Db) Execute(query string) (sql.Result, error) {
 	return result, nil
 }
 
+func (db *Db) Query(query string) (*sql.Rows, error) {
+	rows, err := db.C.Query(query)
+	if err != nil {
+		log.Println(err.Error())
+		return nil, err
+	}
+	return rows, nil
+}
+
 // Function to install tables
 func InstallTables() {
 	db := &Db{}
