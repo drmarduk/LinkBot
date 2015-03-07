@@ -10,8 +10,8 @@ import (
 
 func StartIrc() {
 
-	ctxIrc = qairc.QAIrc("test1", "test2")
-	ctxIrc.Address = "irc.quiteawful.net:6697"
+	ctxIrc = qairc.QAIrc(*cfgNick, *cfgNick)
+	ctxIrc.Address = *cfgNetwork + ":" + *cfgPort
 	ctxIrc.UseTLS = true
 	ctxIrc.TLSCfg = &tls.Config{InsecureSkipVerify: true}
 
@@ -28,7 +28,7 @@ func StartIrc() {
 		}
 
 		if m.Type == "001" {
-			ctxIrc.Join("#g0")
+			ctxIrc.Join(*cfgChannel)
 		}
 		if m.Type == "PRIVMSG" {
 			l := len(m.Args)
