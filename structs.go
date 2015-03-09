@@ -20,3 +20,8 @@ type Link struct {
 type Db struct {
 	C *sql.DB
 }
+
+type Template struct {
+	File    string
+	Content string
+}
