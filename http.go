@@ -5,23 +5,13 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"time"
-
-	"github.com/bradfitz/http2"
 )
 
 func StartHttp() {
-	var srv http.Server
-
-	//srv.Addr = "localhost:443"
-
-	// register handler
 	http.HandleFunc("/", homeHandler)
-
-	http2.ConfigureServer(&srv, &http2.Server{})
-
-	log.Fatal(srv.ListenAndServeTLS("server.crt", "server.key"))
-
+	// jeder Traffic nach https leiten
+	go http.ListenAndServe(*srvAdress+":80", http.RedirectHandler("https://"+*srvAdress, 303))
+	http.ListenAndServeTLS(*srvAdress+":443", "server.crt", "server.key", nil)
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -40,14 +30,14 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var id int64
 		var user, url string
-		var time time.Time
+		var time interface{} //string //time.Time
 		err = rows.Scan(&id, &user, &url, &time)
 		if err != nil {
 			log.Println(err.Error())
 			continue
 		}
 
-		io.WriteString(w, fmt.Sprintf("<li>%d - %s <a href='%s'>%s</a> (%q)</li>", id, user, url, url, time))
+		io.WriteString(w, fmt.Sprintf("<li>%d - %s <a href='%s'>%s</a> (%v)</li>", id, user, url, url, time))
 	}
 	io.WriteString(w, "</ul></body></html>")
 
