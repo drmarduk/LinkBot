@@ -15,7 +15,7 @@ var (
 	cfgChannel   = flag.String("channel", "#rumkugel", "Channel")
 	cfgNetwork   = flag.String("network", "irc.quiteawful.net", "Network")
 	cfgPort      = flag.String("port", "6697", "Ports")
-	srvAdress    = flag.String("host" "links.knilch.net" "host")
+	srvAdress    = flag.String("host", "links.knilch.net", "host")
 )
 
 func main() {
