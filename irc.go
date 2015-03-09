@@ -37,7 +37,7 @@ func StartIrc() {
 			p := &Post{
 				User:      m.Sender.Nick,
 				Message:   msg,
-				Timestamp: time.Now(),
+				Timestamp: time.Now().Local(),
 			}
 
 			PostReceiver <- p
