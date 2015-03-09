@@ -13,7 +13,7 @@ func StartHttp() {
 	http.Handle("/", http.FileServer(http.Dir("./html")))
 	// jeder Traffic nach https leiten
 	go http.ListenAndServe(*srvAdress+":80", http.RedirectHandler("https://"+*srvAdress, 303))
-	http.ListenAndServeTLS(*srvAdress+":443", "server.crt", "server.key", nil)
+	http.ListenAndServeTLS(*srvAdress+":443", "data/server.crt", "data/server.key", nil)
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
