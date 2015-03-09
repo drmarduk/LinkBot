@@ -25,6 +25,7 @@
 .lstItem {
 	/*display: inline;
 	border-left: blue;*/
+	overflow: hidden;
 	border-left: 3px solid rgb(246, 246, 239);
 	padding-left: 5px;
 }
