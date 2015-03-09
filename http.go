@@ -9,13 +9,19 @@ import (
 
 func StartHttp() {
 	http.HandleFunc("/", homeHandler)
+	http.HandleFunc("/index", homeHandler)
+	http.Handle("/", http.FileServer(http.Dir("./html")))
 	// jeder Traffic nach https leiten
 	go http.ListenAndServe(*srvAdress+":80", http.RedirectHandler("https://"+*srvAdress, 303))
 	http.ListenAndServeTLS(*srvAdress+":443", "server.crt", "server.key", nil)
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, "<html><head><title>Sammelsurium an Links</title><head><body><ul>")
+	t := Template{}
+	t.Load("index.html")
+
+	var links string = ""
+
 	db := Db{}
 	db.Open()
 	rows, err := db.Query("select id, user, url, time from links")
@@ -36,9 +42,9 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 			log.Println(err.Error())
 			continue
 		}
-
-		io.WriteString(w, fmt.Sprintf("<li>%d - %s <a href='%s'>%s</a> (%v)</li>", id, user, url, url, time))
+		links += fmt.Sprintf("<li>%d - %s <a href='%s'>%s</a> (%v)</li>", id, user, url, url, time)
 	}
-	io.WriteString(w, "</ul></body></html>")
 
+	t.SetValue("{{lst_Links}}", links)
+	io.WriteString(w, t.String())
 }
