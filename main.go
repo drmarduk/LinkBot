@@ -10,11 +10,12 @@ import (
 var (
 	ctxIrc       *qairc.Engine
 	PostReceiver chan (*Post)
-	cfgNick      = flag.String("nick", "Datenkrake", "Nickname")
-	cfgUser      = flag.String("user", "Datenkrake", "Username")
-	cfgChannel   = flag.String("channel", "#rumkugel", "Channel")
+	cfgNick      = flag.String("nick", "Datenkrake2", "Nickname")
+	cfgUser      = flag.String("user", "Datenkrake2", "Username")
+	cfgChannel   = flag.String("channel", "#g0", "Channel")
 	cfgNetwork   = flag.String("network", "irc.quiteawful.net", "Network")
 	cfgPort      = flag.String("port", "6697", "Ports")
+	srvAdress    = flag.String("host" /*"links.knilch.net"*/, "localhost", "host")
 )
 
 func main() {

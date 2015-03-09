@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"log"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/drmarduk/go-sqlite3"
 )
 
 func (db *Db) Open() {
-	x, err := sql.Open("sqlite3", "links.db")
+	x, err := sql.Open("sqlite3", "file:links.db?loc=CET")
 	if err != nil {
 		log.Println(err.Error())
 	}
