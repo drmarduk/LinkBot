@@ -1,0 +1,46 @@
+#mainContainer {
+	
+}
+
+#linklistContainer {
+	
+	margin-left: 20px;
+}
+
+#linklist {
+	background-color: rgb(246, 246, 239);
+	padding-top: 4px;
+	padding-left: 7px;
+}
+
+/*#linklist > li {
+	
+}
+
+#linklist > li:hover {
+	
+}
+*/
+
+.lstItem {
+	/*display: inline;
+	border-left: blue;*/
+	border-left: 3px solid rgb(246, 246, 239);
+	padding-left: 5px;
+}
+
+.lstItem:hover {
+	border-left: 3px solid #1FA2D6;
+}
+
+.lstUrl {
+	display: inline;
+	margin-bottom: 0px;
+}
+
+.lstMeta {
+	margin-left: 16px;
+	margin-top: 0px;
+
+	font-size: 9pt;
+}

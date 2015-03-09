@@ -8,7 +8,7 @@ import (
 )
 
 func (db *Db) Open() {
-	x, err := sql.Open("sqlite3", "file:links.db?loc=CET")
+	x, err := sql.Open("sqlite3", "file:data/links.db?loc=CET")
 	if err != nil {
 		log.Println(err.Error())
 	}
