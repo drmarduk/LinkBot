@@ -12,10 +12,10 @@ var (
 	PostReceiver chan (*Post)
 	cfgNick      = flag.String("nick", "Datenkrake2", "Nickname")
 	cfgUser      = flag.String("user", "Datenkrake2", "Username")
-	cfgChannel   = flag.String("channel", "#g0", "Channel")
+	cfgChannel   = flag.String("channel", "#rumkugel", "Channel")
 	cfgNetwork   = flag.String("network", "irc.quiteawful.net", "Network")
 	cfgPort      = flag.String("port", "6697", "Ports")
-	srvAdress    = flag.String("host" /*"links.knilch.net"*/, "localhost", "host")
+	srvAdress    = flag.String("host" "links.knilch.net" "host")
 )
 
 func main() {
