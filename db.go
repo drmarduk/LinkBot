@@ -59,24 +59,3 @@ func InstallTables() {
 	}
 	db.Close()
 }
-
-func AlterTable() {
-	// one time foo, to modify db
-	var tables []string = []string{
-		"alter table links add column post text;",
-		"alter table links add column mime text;",
-		"alter table links add column header text;",
-		"alter table links add column src text;",
-	}
-
-	db := &Db{}
-	db.Open()
-	for _, s := range tables {
-		err := db.Execute(s)
-		if err != nil {
-			log.Println(err.Error())
-		}
-	}
-	db.Close()
-
-}
