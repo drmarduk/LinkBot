@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	urlregex *regexp.Regexp = regexp.MustCompile(`((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;!:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~!%\/.\w-_]*)?\??(?:[-\+!=&;%@.\w_]*)#?(?:[\w]*))?)`)
+	urlregex *regexp.Regexp = regexp.MustCompile(`((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;!:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~!#%\/.\w-_]*)?\??(?:[-\+!=&;%@.\w_]*)[#:]?(?:[\w]*))?)`)
 )
 
 func StartParser() error {
@@ -42,7 +42,7 @@ func addLink(link Link) bool {
 	db := &Db{}
 	db.Open()
 	stmt := fmt.Sprintf(`Insert into links(id, user, url, time) values(null, "%s", "%s", "%s")`, link.User, link.Url, link.Timestamp)
-	_, err := db.Execute(stmt)
+	err := db.Execute(stmt)
 	db.Close()
 	if err != nil {
 		log.Println(err.Error())

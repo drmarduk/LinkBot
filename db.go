@@ -16,32 +16,39 @@ func (db *Db) Open() {
 }
 
 func (db *Db) Close() {
+	if db.ResultRows != nil {
+		db.ResultRows.Close()
+	}
+	db.Result = nil
 	db.C.Close()
 }
 
-func (db *Db) Execute(query string) (sql.Result, error) {
-	result, err := db.C.Exec(query)
+func (db *Db) Execute(query string) error {
+	var err error
+	db.Result, err = db.C.Exec(query)
 	if err != nil {
 		log.Println(err.Error())
-		return nil, err
+		return err
 	}
-	return result, nil
+	return nil
 }
 
-func (db *Db) Query(query string) (*sql.Rows, error) {
-	rows, err := db.C.Query(query)
+func (db *Db) Query(query string) error {
+	db.ResultRows = nil
+	var err error
+	db.ResultRows, err = db.C.Query(query)
 	if err != nil {
 		log.Println(err.Error())
-		return nil, err
+		return err
 	}
-	return rows, nil
+	return nil
 }
 
 // Function to install tables
 func InstallTables() {
 	db := &Db{}
 	db.Open()
-	_, err := db.Execute("create table if not exists links(id integer not null primary key, user text, url text, time datetime);")
+	err := db.Execute("create table if not exists links(id integer not null primary key, user text, url text, time datetime);")
 	if err != nil {
 		log.Println(err.Error())
 	}

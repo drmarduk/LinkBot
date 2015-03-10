@@ -26,7 +26,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
 	db := Db{}
 	db.Open()
-	rows, err := db.Query("select id, user, url, time from links order by id desc")
+	err := db.Query("select id, user, url, time from links order by id desc")
 	if err != nil {
 		log.Println(err.Error())
 		db.Close()
@@ -35,11 +35,11 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	for rows.Next() {
+	for db.ResultRows.Next() {
 		var id int64
 		var user, url string
 		var timestamp time.Time
-		err = rows.Scan(&id, &user, &url, &timestamp)
+		err = db.ResultRows.Scan(&id, &user, &url, &timestamp)
 		if err != nil {
 			log.Println(err.Error())
 			continue

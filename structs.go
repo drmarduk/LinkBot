@@ -18,7 +18,9 @@ type Link struct {
 }
 
 type Db struct {
-	C *sql.DB
+	C          *sql.DB
+	ResultRows *sql.Rows
+	Result     sql.Result
 }
 
 type Template struct {
