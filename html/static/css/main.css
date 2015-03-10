@@ -7,8 +7,17 @@
 	margin-left: 20px;
 }
 
+#main {
+	
+}
+
 #linklist {
 	background-color: rgb(246, 246, 239);
+
+	margin-top: 15px;
+	margin-left: 15px;
+	margin-right: 15px;
+
 	padding-top: 4px;
 	padding-left: 7px;
 	padding-right: 7px;
