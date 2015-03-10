@@ -21,6 +21,8 @@ var (
 func main() {
 	flag.Parse()
 
+	AlterTable()
+	return
 	InstallTables()
 	PostReceiver = make(chan (*Post))
 
