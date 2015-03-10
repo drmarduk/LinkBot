@@ -19,7 +19,7 @@ func (t *Template) Load(file string) error {
 }
 
 func (t *Template) SetValue(pattern, value string) {
-	t.Content = strings.Replace(t.Content, pattern, value, 1)
+	t.Content = strings.Replace(t.Content, pattern, value, -1)
 }
 
 func (t *Template) String() string {
