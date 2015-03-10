@@ -47,7 +47,7 @@ func (db *Db) Query(query string) error {
 // Function to install tables
 func InstallTables() {
 	var tables []string = []string{
-		"CREATE TABLE IF NOT EXISTS links(id integer not null primary key, user text, url text, time datetime);",
+		"CREATE TABLE IF NOT EXISTS links(id integer not null primary key, user text, url text, time datetime, post text, mime text, header text, src text);",
 	}
 	db := &Db{}
 	db.Open()
@@ -61,6 +61,7 @@ func InstallTables() {
 }
 
 func AlterTable() {
+	// one time foo, to modify db
 	var tables []string = []string{
 		"alter table links add column post text;",
 		"alter table links add column mime text;",
