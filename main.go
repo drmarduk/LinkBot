@@ -28,5 +28,6 @@ func main() {
 
 	go StartIrc()
 	go StartHttp()
+	go StartCrawler()
 	log.Fatal(StartParser())
 }

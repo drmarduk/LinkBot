@@ -16,7 +16,7 @@ func StartParser() error {
 
 		links := extractLink(post.Message)
 		for _, l := range links {
-			x := Link{
+			x := &Link{
 				User:      post.User,
 				Url:       l,
 				Post:      post.Message,
@@ -39,7 +39,7 @@ func extractLink(data string) []string {
 	return result
 }
 
-func addLink(link Link) bool {
+func addLink(link *Link) bool {
 	db := Db{}
 	db.Open()
 	stmt := fmt.Sprintf(`Insert into links(id, user, url, time, post) values(null, "%s", "%s", "%s", "%s")`, link.User, link.Url, link.Timestamp, link.Post)
@@ -50,12 +50,13 @@ func addLink(link Link) bool {
 		return false
 	}
 	link.Id, err = db.Result.LastInsertId()
+	log.Printf("InsertedId: %v\n", link.Id)
 
 	if err != nil {
 		log.Println(err.Error())
 		return false
 	}
 	// TODO: link zum crawler schicken
-	CrawlReceiver <- &link
+	CrawlReceiver <- link
 	return true
 }
