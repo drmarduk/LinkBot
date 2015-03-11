@@ -109,7 +109,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	case (page + 1) == totalpages:
 		pagination += "<li><a href='/'>0</a></li>"
 		pagination += "<li><a href='/" + strconv.Itoa(page-1) + "'>" + strconv.Itoa(page-1) + "</a></li>"
-		pagination += "<li> class='uk-active'><span>" + strconv.Itoa(page) + "</span></li>"
+		pagination += "<li  class='uk-active'><span>" + strconv.Itoa(page) + "</span></li>"
 		pagination += "<li><a href='/" + strconv.Itoa(totalpages) + "'>" + strconv.Itoa(totalpages) + "</a></li>"
 		break
 	case page == totalpages:
