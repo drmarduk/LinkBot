@@ -5,18 +5,23 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>Sammelsurium an Links</title>
 
-		<link rel="stylesheet" href="static/css/uikit.min.css" />
-		<link rel="stylesheet" href="static/css/main.css" />
-		<script src="static/js/jquery.js"></script>
-		<script src="static/js/uikit.min.js"></script>
+		<link rel="stylesheet" href="/static/css/uikit.min.css" />
+		<link rel="stylesheet" href="/static/css/main.css" />
+		<script src="/static/js/jquery.js"></script>
+		<script src="/static/js/uikit.min.js"></script>
 	</head>
 	<body>
 		<div class="uk-grid" id="main">
-			<div>
+			<div id="lst">
 				<ul class="uk-list uk-list-line" id="linklist">
 					{{lst_Links}}
 				</ul>
+
+				<div id="pagination">
+					{{lst_Pagination}}
+				</div>
 			</div>
+			
 		</div>
 	</body>
 </html>

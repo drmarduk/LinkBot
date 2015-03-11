@@ -23,6 +23,10 @@
 	padding-right: 7px;
 }
 
+#lst {
+	display: block;
+}
+
 .lstItem {
 	overflow: hidden;
 	border-left: 3px solid rgb(246, 246, 239);

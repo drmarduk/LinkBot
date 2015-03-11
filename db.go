@@ -26,6 +26,7 @@ func (db *Db) Close() {
 func (db *Db) Execute(query string) error {
 	var err error
 	db.Result, err = db.C.Exec(query)
+
 	if err != nil {
 		log.Println(err.Error())
 		return err
@@ -46,11 +47,16 @@ func (db *Db) Query(query string) error {
 
 // Function to install tables
 func InstallTables() {
+	var tables []string = []string{
+		"CREATE TABLE IF NOT EXISTS links(id integer not null primary key, user text, url text, time datetime, post text, mime text, header text, src text);",
+	}
 	db := &Db{}
 	db.Open()
-	err := db.Execute("create table if not exists links(id integer not null primary key, user text, url text, time datetime);")
-	if err != nil {
-		log.Println(err.Error())
+	for _, s := range tables {
+		err := db.Execute(s)
+		if err != nil {
+			log.Println(err.Error())
+		}
 	}
-	defer db.Close()
+	db.Close()
 }
