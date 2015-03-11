@@ -73,40 +73,40 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// pagination
-	var pagination string = "<ul>"
+	var pagination string = "<ul class='uk-pagination'>"
 	var total int = totalLinks()
 
 	var totalpages int = int(math.Ceil(float64(total)/float64(linksperpage))) - 1
 
 	switch {
 	case page == 0:
-		pagination += "<li>0</li>"
+		pagination += "<li class='uk-active'><span>0</span></li>"
 		pagination += "<li><a href='/1'>1</a></li>"
 		pagination += "<li><a href='/" + strconv.Itoa(totalpages) + "'>" + strconv.Itoa(totalpages) + "</a></li>"
 		break
 	case page == 1:
 		pagination += "<li><a href='/'>0</a></li>"
-		pagination += "<li>1</li>"
+		pagination += "<li class='uk-active'><span>1</span></li>"
 		pagination += "<li><a href='/" + strconv.Itoa(page+1) + "'>" + strconv.Itoa(page+1) + "</a></li>"
 		pagination += "<li><a href='/" + strconv.Itoa(totalpages) + "'>" + strconv.Itoa(totalpages) + "</a></li>"
 		break
 	case page > 1 && (page+1) < totalpages:
 		pagination += "<li><a href='/'>0</a></li>"
 		pagination += "<li><a href='/" + strconv.Itoa(page-1) + "'>" + strconv.Itoa(page-1) + "</a></li>"
-		pagination += "<li>" + strconv.Itoa(page) + "</li>"
+		pagination += "<li class='uk-active'><span>" + strconv.Itoa(page) + "</span></li>"
 		pagination += "<li><a href='/" + strconv.Itoa(page+1) + "'>" + strconv.Itoa(page+1) + "</a></li>"
 		pagination += "<li><a href='/" + strconv.Itoa(totalpages) + "'>" + strconv.Itoa(totalpages) + "</a></li>"
 		break
 	case (page + 1) == totalpages:
 		pagination += "<li><a href='/'>0</a></li>"
 		pagination += "<li><a href='/" + strconv.Itoa(page-1) + "'>" + strconv.Itoa(page-1) + "</a></li>"
-		pagination += "<li>" + strconv.Itoa(page) + "</li>"
+		pagination += "<li> class='uk-active'><span>" + strconv.Itoa(page) + "</span></li>"
 		pagination += "<li><a href='/" + strconv.Itoa(totalpages) + "'>" + strconv.Itoa(totalpages) + "</a></li>"
 		break
 	case page == totalpages:
 		pagination += "<li><a href='/'>0</a></li>"
 		pagination += "<li><a href='/" + strconv.Itoa(page-1) + "'>" + strconv.Itoa(page-1) + "</a></li>"
-		pagination += "<li>" + strconv.Itoa(totalpages) + "</li>"
+		pagination += "<li class='uk-active'><span>" + strconv.Itoa(totalpages) + "</span></li>"
 		break
 	}
 
