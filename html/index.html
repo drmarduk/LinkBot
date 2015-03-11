@@ -12,7 +12,25 @@
 	</head>
 	<body>
 		<div class="uk-grid" id="main">
+			
 			<div id="lst">
+
+				<div id="navdiv" class="uk-">
+					<nav class="uk-navbar" id="navbar">
+						<a href="/" class="uk-navbar-brand">LinkBot</a>
+						<ul class="uk-navbar-nav">
+							<li><a href="/">Alle</a></li>
+							<li><a href="/wasfuer">Was für ...</a></li>
+						</ul>
+						<div class="uk-navbar-content uk-navbar-flip">
+							<form method="get" action="/search" class="uk-form uk-margin-remove uk-display-inline-block">
+								<input type="text" placeholder="Suche">
+								<button class="uk-button uk-button-primary">Suche</button>
+							</form>
+						</div>
+					</nav>
+				</div>
+
 				<ul class="uk-list uk-list-line" id="linklist">
 					{{lst_Links}}
 				</ul>

@@ -24,7 +24,21 @@
 }
 
 #lst {
+	
+}
+#navdiv {
 	display: block;
+	
+}
+
+#navbar {
+	margin-top: 15px;
+	margin-left: 15px;
+	margin-right: 15px;
+
+	padding-top: 4px;
+	padding-left: 7px;
+	padding-right: 7px;
 }
 
 .lstItem {
