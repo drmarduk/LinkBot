@@ -50,6 +50,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
 	db := Db{}
 	db.Open()
+	off := "\n<!--banane for webscale-->"
 	err = db.Query("select id, user, url, time from links order by id desc limit " + strconv.Itoa(offset) + ", " + strconv.Itoa(linksperpage))
 	if err != nil {
 		log.Println(err.Error())
@@ -114,7 +115,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	t.Load("index.html")
 
 	t.SetValue("{{lst_Links}}", links)
-	t.SetValue("{{lst_Pagination}}", pagination)
+	t.SetValue("{{lst_Pagination}}", pagination+off)
 
 	io.WriteString(w, t.String())
 }
