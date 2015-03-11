@@ -23,6 +23,7 @@ type Db struct {
 	C          *sql.DB
 	ResultRows *sql.Rows
 	Result     sql.Result
+	Stmt       *sql.Stmt
 }
 
 type Template struct {
