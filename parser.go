@@ -50,7 +50,6 @@ func addLink(link *Link) bool {
 		return false
 	}
 	link.Id, err = db.Result.LastInsertId()
-	log.Printf("InsertedId: %v\n", link.Id)
 
 	if err != nil {
 		log.Println(err.Error())
