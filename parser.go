@@ -19,6 +19,7 @@ func StartParser() error {
 			x := Link{
 				User:      post.User,
 				Url:       l,
+				Post:      post.Message,
 				Timestamp: post.Timestamp,
 			}
 			addLink(x)
@@ -41,7 +42,7 @@ func extractLink(data string) []string {
 func addLink(link Link) bool {
 	db := &Db{}
 	db.Open()
-	stmt := fmt.Sprintf(`Insert into links(id, user, url, time) values(null, "%s", "%s", "%s")`, link.User, link.Url, link.Timestamp)
+	stmt := fmt.Sprintf(`Insert into links(id, user, url, time, post) values(null, "%s", "%s", "%s", "%s")`, link.User, link.Url, link.Timestamp, link.Post)
 	err := db.Execute(stmt)
 	db.Close()
 	if err != nil {

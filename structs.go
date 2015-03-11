@@ -14,6 +14,7 @@ type Post struct {
 type Link struct {
 	User      string
 	Url       string
+	Post      string
 	Timestamp time.Time
 }
 
