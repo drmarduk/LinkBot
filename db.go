@@ -26,9 +26,7 @@ func (db *Db) Close() {
 func (db *Db) Execute(query string) error {
 	var err error
 	db.Result, err = db.C.Exec(query)
-	//id, _ := db.Result.LastInsertId()
-	log.Println("(db *Db): %x", &db)
-	log.Println("(db *Db).Result: %x", &db.Result)
+
 	if err != nil {
 		log.Println(err.Error())
 		return err

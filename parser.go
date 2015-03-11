@@ -44,13 +44,11 @@ func addLink(link Link) bool {
 	db.Open()
 	stmt := fmt.Sprintf(`Insert into links(id, user, url, time, post) values(null, "%s", "%s", "%s", "%s")`, link.User, link.Url, link.Timestamp, link.Post)
 	err := db.Execute(stmt)
-	db.Close()
+	defer db.Close()
 	if err != nil {
 		log.Println(err.Error())
 		return false
 	}
-	log.Println("parser.db: %x", &db)
-	log.Println("parser.db.Result: %x", &db.Result)
 	link.Id, err = db.Result.LastInsertId()
 
 	if err != nil {
