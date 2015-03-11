@@ -40,7 +40,7 @@ func extractLink(data string) []string {
 }
 
 func addLink(link Link) bool {
-	db := &Db{}
+	db := Db{}
 	db.Open()
 	stmt := fmt.Sprintf(`Insert into links(id, user, url, time, post) values(null, "%s", "%s", "%s", "%s")`, link.User, link.Url, link.Timestamp, link.Post)
 	err := db.Execute(stmt)
@@ -49,5 +49,15 @@ func addLink(link Link) bool {
 		log.Println(err.Error())
 		return false
 	}
+	log.Println("parser.db: %x", &db)
+	log.Println("parser.db.Result: %x", &db.Result)
+	link.Id, err = db.Result.LastInsertId()
+
+	if err != nil {
+		log.Println(err.Error())
+		return false
+	}
+	// TODO: link zum crawler schicken
+	CrawlReceiver <- &link
 	return true
 }

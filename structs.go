@@ -12,6 +12,7 @@ type Post struct {
 }
 
 type Link struct {
+	Id        int64
 	User      string
 	Url       string
 	Post      string
