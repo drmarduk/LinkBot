@@ -29,5 +29,6 @@ func main() {
 	go StartIrc()
 	go StartHttp()
 	go StartCrawler()
+	go StartApi()
 	log.Fatal(StartParser())
 }
