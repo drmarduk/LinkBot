@@ -27,8 +27,8 @@ func StartHttp() {
 	})
 
 	handler := middleware.Handler(mux)
-	go http.ListenAndServe(*srvAdress+":80", http.RedirectHandler("https://"+*srvAdress, 301)) // http -> https redirect
-	http.ListenAndServeTLS(*srvAdress+":443", "data/server.crt", "data/server.key", handler)
+	go log.Fatal(http.ListenAndServe(*srvAdress+":80", http.RedirectHandler("https://"+*srvAdress, 301))) // http -> https redirect
+	log.Fatal(http.ListenAndServeTLS(*srvAdress+":443", "data/server.crt", "data/server.key", handler))
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
