@@ -20,7 +20,7 @@ func StartHttp() {
 	mux.HandleFunc("/", homeHandler)
 	mux.HandleFunc("/static/", staticHandler)
 	mux.HandleFunc("/wasfuer/", wasfuerHandler)
-	mux.HandleFunc("/search/", searchHandler)
+	mux.HandleFunc("/search/", searchFormHandler)
 	mux.HandleFunc("/stats", func(w http.ResponseWriter, r *http.Request) {
 		b, _ := json.Marshal(middleware.Data())
 		w.Write(b)
@@ -183,10 +183,10 @@ func wasfuerHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, t.String())
 }
 
-func searchHandler(w http.ResponseWriter, r *http.Request) {
+func searchFormHandler(w http.ResponseWriter, r *http.Request) {
 	term := r.FormValue("term")
 	log.Println("Search: " + term)
-	var query string = "select id, user, url, time from links where instr(lower(src), lower($1)) > 0 order by time desc;"
+	var query string = "select id, user, url, time from links where instr(src, $1) > 0 order by time desc;"
 
 	t := Template{}
 	t.Load("index.html")
