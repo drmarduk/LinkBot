@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"math"
@@ -13,6 +14,13 @@ import (
 
 	"github.com/thoas/stats"
 )
+
+type Result struct {
+	ID        int64
+	User      string
+	Url       string
+	Timestamp time.Time
+}
 
 func StartHttp() {
 	middleware := stats.New()
@@ -70,17 +78,16 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer db.Close()
-
+	Results := []Result{}
 	for db.ResultRows.Next() {
-		var id int64
-		var user, url string
-		var timestamp time.Time
-		err = db.ResultRows.Scan(&id, &user, &url, &timestamp)
+		res := Result{}
+		err = db.ResultRows.Scan(&res.ID, &res.User, &res.Url, &res.Timestamp)
 		if err != nil {
 			log.Println(err.Error())
 			continue
 		}
-		links += fmt.Sprintf("<li class='lstItem'>%d. <div class='lstUrl'><a href='%s'>%s</a></div><div class='lstMeta'>von %s am %s</div></li>", id, url, url, user, timestamp.Format("02.01.2006 15:04"))
+		Results = append(Results, res)
+		//links += fmt.Sprintf("<li class='lstItem'>%d. <div class='lstUrl'><a href='%s'>%s</a></div><div class='lstMeta'>von %s am %s</div></li>", id, url, url, user, timestamp.Format("02.01.2006 15:04"))
 	}
 
 	// pagination
@@ -128,7 +135,14 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	t.SetValue("{{lst_Links}}", links)
 	t.SetValue("{{lst_Pagination}}", pagination+off)
 
-	io.WriteString(w, t.String())
+	//io.WriteString(w, t.String())
+
+	temp, err := template.ParseFiles("html/index.html")
+	if err != nil {
+		log.Println(err.Error())
+	}
+	log.Printf("%+v\n", Results)
+	temp.Execute(w, &Results)
 }
 
 // Handler for static css/js files
