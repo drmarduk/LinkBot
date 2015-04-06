@@ -1,51 +1,52 @@
 package main
 
 import (
-	"io/ioutil"
+	"fmt"
 	"log"
 	"net/http"
+	"os/exec"
+	"strings"
 )
 
 func StartCrawler() {
 	for {
 		l := <-CrawlReceiver
-		src := get(l.Url)
-
+		src, err := get(l.Url)
+		if err != nil {
+			log.Println(err.Error())
+			continue
+		}
 		db := Db{}
 		db.Open()
+		defer db.Close()
 		query := "update links set src = $1 where id = $2"
 
-		err := db.Prepare(query)
+		err = db.Prepare(query)
 		if err != nil {
 			log.Println(err.Error())
-			db.Close()
 			continue
 		}
-		err = db.ExecuteStmt(src, l.Id)
+		err = db.ExecuteStmt(src.Content, l.Id)
 		if err != nil {
 			log.Println(err.Error())
-			db.Close()
 			continue
 		}
-		db.Close()
 	}
 }
 
-func get(url string) string {
-	// TODO prevent downloads to be > 10MB or so
-	resp, err := http.Get(url)
+//TODO: this does not limit the filesize.
+func get(url string) (LinkContent, error) {
+	c := LinkContent{}
+	out, err := exec.Command("lynx", "--dump", "-nolist", url).CombinedOutput()
 	if err != nil {
-		log.Println(err.Error())
-		return ""
+		return c, err
 	}
-	defer resp.Body.Close()
-
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Println(err.Error())
-		return ""
+	if len(out) == 0 {
+		return c, fmt.Errorf("%s: empty response")
 	}
-
-	src := string(b)
-	return src
+	c.MIME = http.DetectContentType(out)
+	if strings.HasPrefix(c.MIME, "text") {
+		c.Content = string(out)
+	}
+	return c, nil
 }

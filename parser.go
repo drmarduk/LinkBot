@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"regexp"
 )
 
@@ -21,6 +22,11 @@ func StartParser() error {
 				Url:       l,
 				Post:      post.Message,
 				Timestamp: post.Timestamp,
+			}
+			_, err := http.Get(l)
+			if err != nil {
+				log.Printf("Cannot connect to %s, ignoring", l)
+				continue
 			}
 			addLink(x)
 			log.Printf("%s: %s\n", post.User, l)
@@ -55,7 +61,6 @@ func addLink(link *Link) bool {
 		log.Println(err.Error())
 		return false
 	}
-	// TODO: link zum crawler schicken
 	CrawlReceiver <- link
 	return true
 }
