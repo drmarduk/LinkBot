@@ -66,10 +66,9 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-<<<<<<< HEAD
-	var response Response
-	response, err = getLinks(page)
-=======
+	//var response Response
+	//response, err = getLinks(page)
+
 	offset = page * linksperpage
 
 	db := Db{}
@@ -99,7 +98,6 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		httpRes.Results = append(httpRes.Results, res)
 	}
->>>>>>> 2aa807b41d5d0757de97140595e1b7f284bc85ee
 
 	// pagination
 	var total int = totalLinks()
@@ -215,8 +213,6 @@ func searchFormHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, t.String())
 }
 
-<<<<<<< HEAD
-=======
 func buildPagintion(currentPage, totalPages int) []int {
 	var pagination []int
 	for i := range iter(totalPages) {
@@ -227,7 +223,6 @@ func buildPagintion(currentPage, totalPages int) []int {
 	return pagination
 }
 
->>>>>>> 2aa807b41d5d0757de97140595e1b7f284bc85ee
 func totalLinks() int {
 	var count int
 	db := Db{}
@@ -243,7 +238,6 @@ func totalLinks() int {
 	return count
 }
 
-<<<<<<< HEAD
 func getLinks(page int) (result Response, err error) {
 	// TODO:
 	var linksperpage int = 30
@@ -281,10 +275,11 @@ func getLinks(page int) (result Response, err error) {
 		result.Data = append(result.Data, LinkResult{Id: int(id), User: user, Url: url, Time: timestamp, TimeStr: timestamp.Format("02.01.2006 15:04")})
 	}
 	return result, nil
-=======
+}
+
 func iter(n int) []struct{} {
 	return make([]struct{}, n)
->>>>>>> 2aa807b41d5d0757de97140595e1b7f284bc85ee
+
 }
 
 /*
