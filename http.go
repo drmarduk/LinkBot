@@ -212,7 +212,8 @@ func searchFormHandler(w http.ResponseWriter, r *http.Request) {
 func buildPagintion(currentPage, totalPages int) []int {
 	var pagination []int
 	for i := range iter(totalPages) {
-		if i == 0 || i == totalPages || ((i >= currentPage-2) && (i <= currentPage+2)) {
+
+		if i == 0 || i == totalPages-1 || ((i >= currentPage-2) && (i <= currentPage+2)) {
 			pagination = append(pagination, i)
 		}
 	}

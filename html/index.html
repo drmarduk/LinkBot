@@ -46,7 +46,7 @@
 				<div id="pagination">
 					<ul class="uk-pagination">
 						{{$c := .Pagination.CurrentPage}}
-						{{range $i, $_ := .Pagination.Pagination}}
+						{{range $_, $i := .Pagination.Pagination}}
 							{{if eq $i $c}}
 								<li class='uk-active'><span>{{$i}}</span></li>
 							{{else}}
