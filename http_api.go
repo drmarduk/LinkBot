@@ -36,14 +36,15 @@ type Response struct {
 }
 
 type LinkResult struct {
-	Id     int       `json:"id"`
-	User   string    `json:"user"`
-	Url    string    `json:"url"`
-	Time   time.Time `json:"time"`
-	Post   string    `json:"post,omitempty"`
-	Mime   string    `json:"mime,omitempty"`
-	Header string    `json:"header,omitempty"`
-	Src    string    `json:"src,omitempty"`
+	Id      int       `json:"id"`
+	User    string    `json:"user"`
+	Url     string    `json:"url"`
+	Time    time.Time `json:"time"`
+	TimeStr string    `json:"time,omitempty"`
+	Post    string    `json:"post,omitempty"`
+	Mime    string    `json:"mime,omitempty"`
+	Header  string    `json:"header,omitempty"`
+	Src     string    `json:"src,omitempty"`
 }
 
 /*
@@ -153,6 +154,7 @@ func linkApiHandler(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "sorry, error")
 		return
 	}
+	defer db.Close()
 
 	for db.ResultRows.Next() {
 		var id int
@@ -219,6 +221,7 @@ func searchApiHandler(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "sorry, error")
 		return
 	}
+	defer db.Close()
 
 	for db.ResultRows.Next() {
 		var id int
