@@ -32,11 +32,18 @@
 				</div>
 
 				<ul class="uk-list uk-list-line" id="linklist">
-					{{lst_Links}}
+					{{range $i, $e := .}}
+						<li class='lstItem'>
+							{{$e.ID}}. 
+							<div class='lstUrl'>
+								<a href='{{$e.Url}}'>{{$e.Url}}</a>
+							</div>
+							<div class='lstMeta'>von {{$e.User}} am {{$e.Timestamp}}</div>
+						</li>
+					{{end}}
 				</ul>
 
 				<div id="pagination">
-					{{lst_Pagination}}
 				</div>
 			</div>
 			

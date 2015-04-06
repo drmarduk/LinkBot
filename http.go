@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"math"
@@ -13,6 +14,13 @@ import (
 
 	"github.com/thoas/stats"
 )
+
+type Result struct {
+	ID        int64
+	User      string
+	Url       string
+	Timestamp time.Time
+}
 
 func StartHttp() {
 	middleware := stats.New()
@@ -27,7 +35,10 @@ func StartHttp() {
 	})
 
 	handler := middleware.Handler(mux)
-	go http.ListenAndServe(*srvAdress+":80", http.RedirectHandler("https://"+*srvAdress, 301)) // http -> https redirect
+
+	go func() {
+		log.Fatal(http.ListenAndServe(*srvAdress+":80", http.RedirectHandler("https://"+*srvAdress, 301))) // http -> https redirect
+	}()
 	log.Fatal(http.ListenAndServeTLS(*srvAdress+":443", "data/server.crt", "data/server.key", handler))
 }
 
@@ -92,7 +103,14 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	t.SetValue("{{lst_Links}}", links)
 	t.SetValue("{{lst_Pagination}}", pagination+off)
 
-	io.WriteString(w, t.String())
+	//io.WriteString(w, t.String())
+
+	temp, err := template.ParseFiles("html/index.html")
+	if err != nil {
+		log.Println(err.Error())
+	}
+	log.Printf("%+v\n", Results)
+	temp.Execute(w, &Results)
 }
 
 // Handler for static css/js files
