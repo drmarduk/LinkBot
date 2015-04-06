@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"regexp"
 )
 
@@ -23,7 +24,16 @@ func StartParser() error {
 				Post:      post.Message,
 				Timestamp: post.Timestamp,
 			}
-			_, err := http.Get(l)
+			u, err := url.Parse(l)
+			if err != nil {
+				log.Println("unable to parse URL", l)
+				continue
+			}
+			//assuming a sane default
+			if u.Scheme == "" {
+				l = "http://" + l
+			}
+			_, err = http.Get(l)
 			if err != nil {
 				log.Printf("Cannot connect to %s, ignoring", l)
 				continue
