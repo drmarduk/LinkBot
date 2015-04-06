@@ -32,7 +32,7 @@
 				</div>
 
 				<ul class="uk-list uk-list-line" id="linklist">
-					{{range $i, $e := .}}
+					{{range $i, $e := .Results}}
 						<li class='lstItem'>
 							{{$e.ID}}. 
 							<div class='lstUrl'>
@@ -44,6 +44,16 @@
 				</ul>
 
 				<div id="pagination">
+					<ul class="uk-pagination">
+						{{$c := .Pagination.CurrentPage}}
+						{{range $i, $_ := .Pagination.Pagination}}
+							{{if eq $i $c}}
+								<li class='uk-active'><span>{{$i}}</span></li>
+							{{else}}
+								<li><a href='/{{$i}}'>{{$i}}</a></li>
+							{{end}}
+						{{end}}
+					</ul>
 				</div>
 			</div>
 			
