@@ -2,9 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"html/template"
-	"io"
 	"log"
 	"math"
 	"net/http"
@@ -15,7 +14,7 @@ import (
 	"github.com/thoas/stats"
 )
 
-type Result struct {
+type LinkResult struct {
 	ID        int64
 	User      string
 	Url       string
@@ -29,9 +28,13 @@ type Pages struct {
 }
 
 type HttpResponse struct {
-	Results    []Result
+	Results    []LinkResult
 	Pagination Pages
 }
+
+var (
+	linksperpage int = 30
+)
 
 func StartHttp() {
 	middleware := stats.New()
@@ -55,10 +58,8 @@ func StartHttp() {
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	httpRes := HttpResponse{}
-	var linksperpage int = 30
 	var page int = 0
 	var err error
-	var offset int = 0
 	var x string = strings.Replace(r.URL.Path, "/", "", -1)
 	if x != "" {
 		page, err = strconv.Atoi(x)
@@ -68,37 +69,10 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//var response Response
-	//response, err = getLinks(page)
 
-	offset = page * linksperpage
-
-	db := Db{}
-	db.Open()
-	query := "select id, user, url, time from links order by id desc limit $1, $2"
-	err = db.Prepare(query)
+	httpRes.Results, err = getLinks(0, page, "")
 	if err != nil {
-		log.Println(err.Error())
-		db.Close()
-		io.WriteString(w, "sorry, error.")
-		return
-	}
-	err = db.QueryStmt(offset, linksperpage)
-	if err != nil {
-		log.Println(err.Error())
-		db.Close()
-		io.WriteString(w, "sorry, error")
-		return
-	}
-	defer db.Close()
-	for db.ResultRows.Next() {
-		res := Result{}
-		err = db.ResultRows.Scan(&res.ID, &res.User, &res.Url, &res.Timestamp)
-		if err != nil {
-			log.Println(err.Error())
-			continue
-		}
-		res.TimeStr = res.Timestamp.Format("02.01.2006 15:04")
-		httpRes.Results = append(httpRes.Results, res)
+		log.Println("homeHandler: " + err.Error())
 	}
 
 	// pagination
@@ -126,93 +100,76 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func wasfuerHandler(w http.ResponseWriter, r *http.Request) {
-
 	var für string = strings.Replace(r.URL.Path, "/wasfuer/", "", 1)
-	var query string = "select id, user, url, time from links where instr(lower(post), 'was für') > 0 and instr(lower(post), lower($1)) > 0 order by time desc;"
-
-	t := Template{}
-	t.Load("index.html")
-
-	var links string = ""
-
-	db := Db{}
-	db.Open()
-	err := db.Prepare(query)
-	if err != nil {
-		log.Println(err.Error())
-		db.Close()
-		io.WriteString(w, "sorry, error.")
-		return
-	}
-	err = db.QueryStmt(für)
-	if err != nil {
-		log.Println(err.Error())
-		db.Close()
-		io.WriteString(w, "sorry, error.")
-		return
-	}
-	defer db.Close()
-
-	for db.ResultRows.Next() {
-		var id int64
-		var user, url string
-		var timestamp time.Time
-		err = db.ResultRows.Scan(&id, &user, &url, &timestamp)
+	httpRes := HttpResponse{}
+	var page int = 0
+	var err error
+	//var offset int = 0
+	var x string = strings.Replace(r.URL.Path, "/", "", -1)
+	if x != "" {
+		page, err = strconv.Atoi(x)
 		if err != nil {
-			log.Println(err.Error())
-			continue
+			page = 0
 		}
-		links += fmt.Sprintf("<li class='lstItem'>%d. <div class='lstUrl'><a href='%s'>%s</a></div><div class='lstMeta'>von %s am %s</div></li>", id, url, url, user, timestamp.Format("02.01.2006 15:04"))
 	}
 
-	t.SetValue("{{lst_Links}}", links)
-	t.SetValue("{{lst_Pagination}}", "")
-	io.WriteString(w, t.String())
+	httpRes.Results, err = getLinks(1, page, für)
+	if err != nil {
+		log.Println("wasfuerHandler: " + err.Error())
+	}
+
+	// pagination
+	var total int = totalLinks()
+
+	var totalpages int = int(math.Ceil(float64(total) / float64(linksperpage)))
+
+	httpRes.Pagination.CurrentPage = page
+	httpRes.Pagination.Pagination = buildPagintion(page, totalpages)
+
+	temp, err := template.ParseFiles("html/index.html")
+	if err != nil {
+		log.Println(err.Error())
+	}
+	temp.Execute(w, &httpRes)
 }
 
 func searchFormHandler(w http.ResponseWriter, r *http.Request) {
-	term := r.FormValue("term")
-	log.Println("Search: " + term)
-	var query string = "select id, user, url, time from links where instr(src, $1) > 0 order by time desc;"
+	var tmp string = strings.Replace(r.URL.Path, "/search/", "", 1)
+	httpRes := HttpResponse{}
+	var page int = 0
+	var err error
+	var p, t string = "0", ""
 
-	t := Template{}
-	t.Load("index.html")
+	x := strings.Split(tmp, "/")
+	if len(x) > 1 {
+		p, t = x[0], x[1]
+	} else {
+		return // ordentlich abbrechen, wenn falsche Anzahl an parametern gegeben ist
+	}
 
-	var links string = ""
+	page, err = strconv.Atoi(p)
+	if err != nil {
+		page = 0
+	}
 
-	db := Db{}
-	db.Open()
-	err := db.Prepare(query)
+	httpRes.Results, err = getLinks(2, page, t)
+	if err != nil {
+		log.Println("search: " + err.Error())
+	}
+
+	// pagination
+	var total int = totalLinks()
+
+	var totalpages int = int(math.Ceil(float64(total) / float64(linksperpage)))
+
+	httpRes.Pagination.CurrentPage = page
+	httpRes.Pagination.Pagination = buildPagintion(page, totalpages)
+
+	temp, err := template.ParseFiles("html/index.html")
 	if err != nil {
 		log.Println(err.Error())
-		db.Close()
-		io.WriteString(w, "sorry, error.")
-		return
 	}
-	err = db.QueryStmt(term)
-	if err != nil {
-		log.Println(err.Error())
-		db.Close()
-		io.WriteString(w, "sorry, error.")
-		return
-	}
-	defer db.Close()
-
-	for db.ResultRows.Next() {
-		var id int64
-		var user, url string
-		var timestamp time.Time
-		err = db.ResultRows.Scan(&id, &user, &url, &timestamp)
-		if err != nil {
-			log.Println(err.Error())
-			continue
-		}
-		links += fmt.Sprintf("<li class='lstItem'>%d. <div class='lstUrl'><a href='%s'>%s</a></div><div class='lstMeta'>von %s am %s</div></li>", id, url, url, user, timestamp.Format("02.01.2006 15:04"))
-	}
-
-	t.SetValue("{{lst_Links}}", links)
-	t.SetValue("{{lst_Pagination}}", "")
-	io.WriteString(w, t.String())
+	temp.Execute(w, &httpRes)
 }
 
 func buildPagintion(currentPage, totalPages int) []int {
@@ -241,22 +198,66 @@ func totalLinks() int {
 	return count
 }
 
-func getLinks(page int) (result Response, err error) {
-	// TODO:
-	var linksperpage int = 30
-	var offset int = page * linksperpage
-	result.Data = make([]LinkResult, 0)
+// getLinks returns an arry of LinkResult, it is a wrappper to cover "all types
+// of link requests.
+//
+// typ specifies the typ of handler the links are for. 0 is the basic home-handler
+// the where var can be omitted. 1 is for the wasfuer handler, the where var must
+// be user. And 2 is for a general search and the where var must be a searchterm.
+//
+// The page var is used for the "limit 0, x" stuff for the pagination and sets the
+// current page.
+func getLinks(typ, page int, where string) (result []LinkResult, err error) {
+	var offset int
+	result = make([]LinkResult, 0)
 
+	if page < 0 { // prevent negative pagecounts
+		page = 0
+	}
+	offset = page * linksperpage
+
+	// create query
+	query := "select id, user, url, time from links "
+
+	switch typ {
+	case 0:
+		query += " order by id desc limit $1, $2;"
+		break
+	case 1: // wasfuer
+		if query += "where instr(post, 'was für') > 0 and instr(post, $1) > 0 order by id desc limit $2, $3;"; where == "" {
+			return result, errors.New("where variable must be set when using typ 1")
+		}
+		break
+	case 2: // normal search
+		if query += "where instr(src, $1) > 0 order by id desc limit $2, $3"; where == "" {
+			return result, errors.New("where variable must be set when using typ 2")
+		}
+	}
+
+	// open Connection
 	db := Db{}
 	db.Open()
-	query := "select id, user, url, time from links order by id desc limit $1, $2"
+
 	err = db.Prepare(query)
 	if err != nil {
 		log.Println(err.Error())
 		db.Close()
 		return result, err
 	}
-	err = db.QueryStmt(offset, linksperpage)
+
+	switch typ {
+	case 0:
+		err = db.QueryStmt(offset, linksperpage)
+		break
+	case 1:
+		err = db.QueryStmt(where, offset, linksperpage)
+		break
+	case 2:
+		// will be changed when the source content is served from another
+		// table
+		err = db.QueryStmt(where, offset, linksperpage)
+		break
+	}
 	if err != nil {
 		log.Println(err.Error())
 		db.Close()
@@ -275,14 +276,13 @@ func getLinks(page int) (result Response, err error) {
 			log.Println(err.Error())
 			continue
 		}
-		result.Data = append(result.Data, LinkResult{Id: int(id), User: user, Url: url, Time: timestamp, TimeStr: timestamp.Format("02.01.2006 15:04")})
+		result = append(result, LinkResult{ID: id, User: user, Url: url, Timestamp: timestamp, TimeStr: timestamp.Format("02.01.2006 15:04")})
 	}
 	return result, nil
 }
 
 func iter(n int) []struct{} {
 	return make([]struct{}, n)
-
 }
 
 /*
