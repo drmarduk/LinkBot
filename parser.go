@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -58,9 +57,14 @@ func extractLink(data string) []string {
 func addLink(link *Link) bool {
 	db := Db{}
 	db.Open()
-	stmt := fmt.Sprintf(`Insert into links(id, user, url, time, post) values(null, "%s", "%s", "%s", "%s")`, link.User, link.Url, link.Timestamp, link.Post)
-	err := db.Execute(stmt)
+
 	defer db.Close()
+	err := db.Prepare("Insert into links(user, url, time, post) values( $1, $2, $3, $4)")
+	if err != nil {
+		log.Println("addLink: " + err.Error())
+		return false
+	}
+	err = db.ExecuteStmt(link.User, link.Url, link.Timestamp, link.Post)
 	if err != nil {
 		log.Println(err.Error())
 		return false
