@@ -49,6 +49,7 @@
 
 .lstItem:hover {
 	border-left: 3px solid #1FA2D6;
+	background-color: rgb(246, 246, 255);
 }
 
 .lstUrl {

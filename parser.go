@@ -3,11 +3,13 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
+	"net/url"
 	"regexp"
 )
 
 var (
-	urlregex *regexp.Regexp = regexp.MustCompile(`((([A-Za-z]{3,9}:(?:\/\/)?)(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;!:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~!#%\/.\w-_]*)?\??(?:[-\+!=&;%@.\w_]*)[#:]?(?:[\w]*))?)`)
+	urlregex *regexp.Regexp = regexp.MustCompile(`((([A-Za-z]{3,9}:(?:\/\/)?)+(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;!:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~!#%\/.\w-_]*)?\??(?:[-\+!=&;%@.\w_]*)[#:]?(?:[\w]*))?)`)
 )
 
 func StartParser() error {
@@ -21,6 +23,20 @@ func StartParser() error {
 				Url:       l,
 				Post:      post.Message,
 				Timestamp: post.Timestamp,
+			}
+			u, err := url.Parse(l)
+			if err != nil {
+				log.Println("unable to parse URL", l)
+				continue
+			}
+			//assuming a sane default
+			if u.Scheme == "" {
+				l = "http://" + l
+			}
+			_, err = http.Get(l)
+			if err != nil {
+				log.Printf("Cannot connect to %s, ignoring", l)
+				continue
 			}
 			addLink(x)
 			log.Printf("%s: %s\n", post.User, l)
@@ -55,7 +71,6 @@ func addLink(link *Link) bool {
 		log.Println(err.Error())
 		return false
 	}
-	// TODO: link zum crawler schicken
 	CrawlReceiver <- link
 	return true
 }

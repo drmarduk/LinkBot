@@ -23,8 +23,8 @@
 							<li><a href="/wasfuer">Was für ...</a></li>
 						</ul>
 						<div class="uk-navbar-content uk-navbar-flip">
-							<form method="get" action="/search" class="uk-form uk-margin-remove uk-display-inline-block">
-								<input type="text" placeholder="Suche">
+							<form method="post" action="/search/" class="uk-form uk-margin-remove uk-display-inline-block">
+								<input type="text" name="term" placeholder="Suche">
 								<button class="uk-button uk-button-primary">Suche</button>
 							</form>
 						</div>
@@ -32,11 +32,28 @@
 				</div>
 
 				<ul class="uk-list uk-list-line" id="linklist">
-					{{lst_Links}}
+					{{range $i, $e := .Results}}
+						<li class='lstItem'>
+							{{$e.ID}}. 
+							<div class='lstUrl'>
+								<a href='{{$e.Url}}'>{{$e.Url}}</a>
+							</div>
+							<div class='lstMeta'>von {{$e.User}} am {{$e.Timestamp}}</div>
+						</li>
+					{{end}}
 				</ul>
 
 				<div id="pagination">
-					{{lst_Pagination}}
+					<ul class="uk-pagination">
+						{{$c := .Pagination.CurrentPage}}
+						{{range $_, $i := .Pagination.Pagination}}
+							{{if eq $i $c}}
+								<li class='uk-active'><span>{{$i}}</span></li>
+							{{else}}
+								<li><a href='/{{$i}}'>{{$i}}</a></li>
+							{{end}}
+						{{end}}
+					</ul>
 				</div>
 			</div>
 			

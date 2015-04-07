@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"math"
@@ -14,24 +15,45 @@ import (
 	"github.com/thoas/stats"
 )
 
+type Result struct {
+	ID        int64
+	User      string
+	Url       string
+	Timestamp time.Time
+}
+
+type Pages struct {
+	Pagination  []int
+	CurrentPage int
+}
+
+type HttpResponse struct {
+	Results    []Result
+	Pagination Pages
+}
+
 func StartHttp() {
 	middleware := stats.New()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", homeHandler)
 	mux.HandleFunc("/static/", staticHandler)
 	mux.HandleFunc("/wasfuer/", wasfuerHandler)
-	mux.HandleFunc("/search/", searchHandler)
+	mux.HandleFunc("/search/", searchFormHandler)
 	mux.HandleFunc("/stats", func(w http.ResponseWriter, r *http.Request) {
 		b, _ := json.Marshal(middleware.Data())
 		w.Write(b)
 	})
 
 	handler := middleware.Handler(mux)
-	go http.ListenAndServe(*srvAdress+":80", http.RedirectHandler("https://"+*srvAdress, 301)) // http -> https redirect
-	http.ListenAndServeTLS(*srvAdress+":443", "data/server.crt", "data/server.key", handler)
+
+	go func() {
+		log.Fatal(http.ListenAndServe(*srvAdress+":80", http.RedirectHandler("https://"+*srvAdress, 301))) // http -> https redirect
+	}()
+	log.Fatal(http.ListenAndServeTLS(*srvAdress+":443", "data/server.crt", "data/server.key", handler))
 }
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
+	httpRes := HttpResponse{}
 	var linksperpage int = 30
 	var page int = 0
 	var err error
@@ -44,16 +66,15 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	offset = page * linksperpage
+	//var response Response
+	//response, err = getLinks(page)
 
-	var links string = ""
+	offset = page * linksperpage
 
 	db := Db{}
 	db.Open()
-	off := "\n<!--banane for webscale-->"
 	query := "select id, user, url, time from links order by id desc limit $1, $2"
 	err = db.Prepare(query)
-	//err = db.Query("select id, user, url, time from links order by id desc limit " + strconv.Itoa(offset) + ", " + strconv.Itoa(linksperpage))
 	if err != nil {
 		log.Println(err.Error())
 		db.Close()
@@ -68,65 +89,29 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer db.Close()
-
 	for db.ResultRows.Next() {
-		var id int64
-		var user, url string
-		var timestamp time.Time
-		err = db.ResultRows.Scan(&id, &user, &url, &timestamp)
+		res := Result{}
+		err = db.ResultRows.Scan(&res.ID, &res.User, &res.Url, &res.Timestamp)
 		if err != nil {
 			log.Println(err.Error())
 			continue
 		}
-		links += fmt.Sprintf("<li class='lstItem'>%d. <div class='lstUrl'><a href='%s'>%s</a></div><div class='lstMeta'>von %s am %s</div></li>", id, url, url, user, timestamp.Format("02.01.2006 15:04"))
+		httpRes.Results = append(httpRes.Results, res)
 	}
 
 	// pagination
-	var pagination string = "<ul class='uk-pagination'>"
 	var total int = totalLinks()
 
-	var totalpages int = int(math.Ceil(float64(total)/float64(linksperpage))) - 1
+	var totalpages int = int(math.Ceil(float64(total) / float64(linksperpage)))
 
-	switch {
-	case page == 0:
-		pagination += "<li class='uk-active'><span>0</span></li>"
-		pagination += "<li><a href='/1'>1</a></li>"
-		pagination += "<li><a href='/" + strconv.Itoa(totalpages) + "'>" + strconv.Itoa(totalpages) + "</a></li>"
-		break
-	case page == 1:
-		pagination += "<li><a href='/'>0</a></li>"
-		pagination += "<li class='uk-active'><span>1</span></li>"
-		pagination += "<li><a href='/" + strconv.Itoa(page+1) + "'>" + strconv.Itoa(page+1) + "</a></li>"
-		pagination += "<li><a href='/" + strconv.Itoa(totalpages) + "'>" + strconv.Itoa(totalpages) + "</a></li>"
-		break
-	case page > 1 && (page+1) < totalpages:
-		pagination += "<li><a href='/'>0</a></li>"
-		pagination += "<li><a href='/" + strconv.Itoa(page-1) + "'>" + strconv.Itoa(page-1) + "</a></li>"
-		pagination += "<li class='uk-active'><span>" + strconv.Itoa(page) + "</span></li>"
-		pagination += "<li><a href='/" + strconv.Itoa(page+1) + "'>" + strconv.Itoa(page+1) + "</a></li>"
-		pagination += "<li><a href='/" + strconv.Itoa(totalpages) + "'>" + strconv.Itoa(totalpages) + "</a></li>"
-		break
-	case (page + 1) == totalpages:
-		pagination += "<li><a href='/'>0</a></li>"
-		pagination += "<li><a href='/" + strconv.Itoa(page-1) + "'>" + strconv.Itoa(page-1) + "</a></li>"
-		pagination += "<li  class='uk-active'><span>" + strconv.Itoa(page) + "</span></li>"
-		pagination += "<li><a href='/" + strconv.Itoa(totalpages) + "'>" + strconv.Itoa(totalpages) + "</a></li>"
-		break
-	case page == totalpages:
-		pagination += "<li><a href='/'>0</a></li>"
-		pagination += "<li><a href='/" + strconv.Itoa(page-1) + "'>" + strconv.Itoa(page-1) + "</a></li>"
-		pagination += "<li class='uk-active'><span>" + strconv.Itoa(totalpages) + "</span></li>"
-		break
+	httpRes.Pagination.CurrentPage = page
+	httpRes.Pagination.Pagination = buildPagintion(page, totalpages)
+
+	temp, err := template.ParseFiles("html/index.html")
+	if err != nil {
+		log.Println(err.Error())
 	}
-
-	pagination += "</ul>"
-	t := Template{}
-	t.Load("index.html")
-
-	t.SetValue("{{lst_Links}}", links)
-	t.SetValue("{{lst_Pagination}}", pagination+off)
-
-	io.WriteString(w, t.String())
+	temp.Execute(w, &httpRes)
 }
 
 // Handler for static css/js files
@@ -183,11 +168,10 @@ func wasfuerHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, t.String())
 }
 
-func searchHandler(w http.ResponseWriter, r *http.Request) {
-
-	var term string = strings.Replace(r.URL.Path, "/search/", "", 1)
-	var query string = ""
-	query = "select id, user, url, time from links where instr(lower(src), lower($1)) > 0 order by time desc;"
+func searchFormHandler(w http.ResponseWriter, r *http.Request) {
+	term := r.FormValue("term")
+	log.Println("Search: " + term)
+	var query string = "select id, user, url, time from links where instr(src, $1) > 0 order by time desc;"
 
 	t := Template{}
 	t.Load("index.html")
@@ -229,44 +213,14 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, t.String())
 }
 
-func buildPagintion(page, total, linksperpage int) string {
-	var pagination string = "<ul class='uk-pagination'>"
+func buildPagintion(currentPage, totalPages int) []int {
+	var pagination []int
+	for i := range iter(totalPages) {
 
-	var totalpages int = int(math.Ceil(float64(total)/float64(linksperpage))) - 1
-
-	switch {
-	case page == 0:
-		pagination += "<li class='uk-active'><span>0</span></li>"
-		pagination += "<li><a href='/1'>1</a></li>"
-		pagination += "<li><a href='/" + strconv.Itoa(totalpages) + "'>" + strconv.Itoa(totalpages) + "</a></li>"
-		break
-	case page == 1:
-		pagination += "<li><a href='/'>0</a></li>"
-		pagination += "<li class='uk-active'><span>1</span></li>"
-		pagination += "<li><a href='/" + strconv.Itoa(page+1) + "'>" + strconv.Itoa(page+1) + "</a></li>"
-		pagination += "<li><a href='/" + strconv.Itoa(totalpages) + "'>" + strconv.Itoa(totalpages) + "</a></li>"
-		break
-	case page > 1 && (page+1) < totalpages:
-		pagination += "<li><a href='/'>0</a></li>"
-		pagination += "<li><a href='/" + strconv.Itoa(page-1) + "'>" + strconv.Itoa(page-1) + "</a></li>"
-		pagination += "<li class='uk-active'><span>" + strconv.Itoa(page) + "</span></li>"
-		pagination += "<li><a href='/" + strconv.Itoa(page+1) + "'>" + strconv.Itoa(page+1) + "</a></li>"
-		pagination += "<li><a href='/" + strconv.Itoa(totalpages) + "'>" + strconv.Itoa(totalpages) + "</a></li>"
-		break
-	case (page + 1) == totalpages:
-		pagination += "<li><a href='/'>0</a></li>"
-		pagination += "<li><a href='/" + strconv.Itoa(page-1) + "'>" + strconv.Itoa(page-1) + "</a></li>"
-		pagination += "<li> class='uk-active'><span>" + strconv.Itoa(page) + "</span></li>"
-		pagination += "<li><a href='/" + strconv.Itoa(totalpages) + "'>" + strconv.Itoa(totalpages) + "</a></li>"
-		break
-	case page == totalpages:
-		pagination += "<li><a href='/'>0</a></li>"
-		pagination += "<li><a href='/" + strconv.Itoa(page-1) + "'>" + strconv.Itoa(page-1) + "</a></li>"
-		pagination += "<li class='uk-active'><span>" + strconv.Itoa(totalpages) + "</span></li>"
-		break
+		if i == 0 || i == totalPages-1 || ((i >= currentPage-2) && (i <= currentPage+2)) {
+			pagination = append(pagination, i)
+		}
 	}
-
-	pagination += "</ul>"
 	return pagination
 }
 
@@ -284,3 +238,57 @@ func totalLinks() int {
 	db.Close()
 	return count
 }
+
+func getLinks(page int) (result Response, err error) {
+	// TODO:
+	var linksperpage int = 30
+	var offset int = page * linksperpage
+	result.Data = make([]LinkResult, 0)
+
+	db := Db{}
+	db.Open()
+	query := "select id, user, url, time from links order by id desc limit $1, $2"
+	err = db.Prepare(query)
+	if err != nil {
+		log.Println(err.Error())
+		db.Close()
+		return result, err
+	}
+	err = db.QueryStmt(offset, linksperpage)
+	if err != nil {
+		log.Println(err.Error())
+		db.Close()
+		return result, err
+	}
+	defer db.Close()
+
+	var id int64
+	var user, url string
+	var timestamp time.Time
+
+	for db.ResultRows.Next() {
+		err = db.ResultRows.Scan(&id, &user, &url, &timestamp)
+
+		if err != nil {
+			log.Println(err.Error())
+			continue
+		}
+		result.Data = append(result.Data, LinkResult{Id: int(id), User: user, Url: url, Time: timestamp, TimeStr: timestamp.Format("02.01.2006 15:04")})
+	}
+	return result, nil
+}
+
+func iter(n int) []struct{} {
+	return make([]struct{}, n)
+
+}
+
+/*
+	Ideen von soda:
+		- Links mit "was für" direkt in der Liste mit "von $user am $datum für $user" markieren
+		- je nach Mime Typ des Links den Hintergrund des <li> Elements anpassen
+
+	Ideen von svbito:
+		- "mach ne anständige json api, faggot" :>
+
+*/
