@@ -9,6 +9,8 @@ import (
 
 var (
 	urlregex *regexp.Regexp = regexp.MustCompile(`((([A-Za-z]{3,9}:(?:\/\/)?)+(?:[-;:&=\+\$,\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;!:&=\+\$,\w]+@)[A-Za-z0-9.-]+)((?:\/[\+~!#%\/.\w-_]*)?\??(?:[-\+!=&;%@.\w_]*)[#:]?(?:[\w]*))?)`)
+	// Versuch eine leserliche URl regex zu basteln
+	// urlregex *regexp.Regexp = regexp.MustCompile(`[a-zA-Z]{3,9}:\/\/((.*)\.)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,9}(:[0-9]{1,5})?(/(.*)?)?`)
 )
 
 func StartParser() error {
