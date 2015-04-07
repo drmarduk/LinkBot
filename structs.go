@@ -17,8 +17,13 @@ type Link struct {
 	Url       string
 	Post      string
 	Timestamp time.Time
+	Content   LinkContent
 }
 
+type LinkContent struct {
+	MIME    string
+	Content string
+}
 type Db struct {
 	C          *sql.DB
 	ResultRows *sql.Rows
