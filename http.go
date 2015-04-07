@@ -20,6 +20,7 @@ type Result struct {
 	User      string
 	Url       string
 	Timestamp time.Time
+	TimeStr   string
 }
 
 type Pages struct {
@@ -96,6 +97,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 			log.Println(err.Error())
 			continue
 		}
+		res.TimeStr = res.Timestamp.Format("02.01.2006 15:04")
 		httpRes.Results = append(httpRes.Results, res)
 	}
 
