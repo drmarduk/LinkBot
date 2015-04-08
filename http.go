@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"html/template"
 	"log"
 	"math"
@@ -25,28 +24,29 @@ type LinkResult struct {
 type Pages struct {
 	Pagination  []int
 	CurrentPage int
+	TotalPages  int
 }
 
 type HttpResponse struct {
-	Results    []LinkResult
-	Pagination Pages
+	ShowError    bool
+	ErrorMessage string
+	Results      []LinkResult
+	Pagination   Pages
 }
 
 var (
 	linksperpage int = 30
+	middleware   *stats.Stats
 )
 
 func StartHttp() {
-	middleware := stats.New()
+	middleware = stats.New()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", homeHandler)
 	mux.HandleFunc("/static/", staticHandler)
 	mux.HandleFunc("/wasfuer/", wasfuerHandler)
 	mux.HandleFunc("/search/", searchFormHandler)
-	mux.HandleFunc("/stats", func(w http.ResponseWriter, r *http.Request) {
-		b, _ := json.Marshal(middleware.Data())
-		w.Write(b)
-	})
+	mux.HandleFunc("/stats", statsHandler)
 
 	handler := middleware.Handler(mux)
 
@@ -56,9 +56,10 @@ func StartHttp() {
 	log.Fatal(http.ListenAndServeTLS(*srvAdress+":443", "data/server.crt", "data/server.key", handler))
 }
 
+// =============== Handler ===============
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	httpRes := HttpResponse{}
-	var page int = 0
+	var page, total int
 	var err error
 	var x string = strings.Replace(r.URL.Path, "/", "", -1)
 	if x != "" {
@@ -67,21 +68,16 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 			page = 0
 		}
 	}
-
-	//var response Response
-
-	httpRes.Results, err = getLinks(0, page, "")
+	// get data from db
+	httpRes.Results, total, err = getHomeLinks(page) // returns links, totalpages and error
 	if err != nil {
 		log.Println("homeHandler: " + err.Error())
 	}
 
 	// pagination
-	var total int = totalLinks()
-
-	var totalpages int = int(math.Ceil(float64(total) / float64(linksperpage)))
-
+	httpRes.Pagination.TotalPages = total
 	httpRes.Pagination.CurrentPage = page
-	httpRes.Pagination.Pagination = buildPagintion(page, totalpages)
+	httpRes.Pagination.Pagination = buildPagintion(page, httpRes.Pagination.TotalPages)
 
 	temp, err := template.ParseFiles("html/index.html")
 	if err != nil {
@@ -90,21 +86,11 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	temp.Execute(w, &httpRes)
 }
 
-// Handler for static css/js files
-func staticHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "html/"+r.URL.Path[1:])
-}
-
-func statsHandler(w http.ResponseWriter, r *http.Request) {
-
-}
-
 func wasfuerHandler(w http.ResponseWriter, r *http.Request) {
 	var für string = strings.Replace(r.URL.Path, "/wasfuer/", "", 1)
 	httpRes := HttpResponse{}
-	var page int = 0
+	var page, total int
 	var err error
-	//var offset int = 0
 	var x string = strings.Replace(r.URL.Path, "/", "", -1)
 	if x != "" {
 		page, err = strconv.Atoi(x)
@@ -113,18 +99,15 @@ func wasfuerHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	httpRes.Results, err = getLinks(1, page, für)
+	httpRes.Results, total, err = getWasfürLinks(page, für)
 	if err != nil {
 		log.Println("wasfuerHandler: " + err.Error())
 	}
 
 	// pagination
-	var total int = totalLinks()
-
-	var totalpages int = int(math.Ceil(float64(total) / float64(linksperpage)))
-
+	httpRes.Pagination.TotalPages = total
 	httpRes.Pagination.CurrentPage = page
-	httpRes.Pagination.Pagination = buildPagintion(page, totalpages)
+	httpRes.Pagination.Pagination = buildPagintion(page, httpRes.Pagination.TotalPages)
 
 	temp, err := template.ParseFiles("html/index.html")
 	if err != nil {
@@ -136,7 +119,7 @@ func wasfuerHandler(w http.ResponseWriter, r *http.Request) {
 func searchFormHandler(w http.ResponseWriter, r *http.Request) {
 	var tmp string = strings.Replace(r.URL.Path, "/search/", "", 1)
 	httpRes := HttpResponse{}
-	var page int = 0
+	var page, total int
 	var err error
 	var p, t string = "0", ""
 
@@ -152,18 +135,15 @@ func searchFormHandler(w http.ResponseWriter, r *http.Request) {
 		page = 0
 	}
 
-	httpRes.Results, err = getLinks(2, page, t)
+	httpRes.Results, total, err = getSearchLinks(page, t)
 	if err != nil {
 		log.Println("search: " + err.Error())
 	}
 
 	// pagination
-	var total int = totalLinks()
-
-	var totalpages int = int(math.Ceil(float64(total) / float64(linksperpage)))
-
+	httpRes.Pagination.TotalPages = total
 	httpRes.Pagination.CurrentPage = page
-	httpRes.Pagination.Pagination = buildPagintion(page, totalpages)
+	httpRes.Pagination.Pagination = buildPagintion(page, httpRes.Pagination.TotalPages)
 
 	temp, err := template.ParseFiles("html/index.html")
 	if err != nil {
@@ -172,98 +152,54 @@ func searchFormHandler(w http.ResponseWriter, r *http.Request) {
 	temp.Execute(w, &httpRes)
 }
 
-func buildPagintion(currentPage, totalPages int) []int {
-	var pagination []int
-	for i := range iter(totalPages) {
-
-		if i == 0 || i == totalPages-1 || ((i >= currentPage-2) && (i <= currentPage+2)) {
-			pagination = append(pagination, i)
-		}
-	}
-	return pagination
+func staticHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "html/"+r.URL.Path[1:])
 }
 
-func totalLinks() int {
-	var count int
-	db := Db{}
-	db.Open()
-	err := db.Query("select count(*) as count from links;")
-	if err != nil {
-		log.Println(err.Error())
-		return 0
-	}
-	db.ResultRows.Next()
-	db.ResultRows.Scan(&count)
-	db.Close()
-	return count
+func statsHandler(w http.ResponseWriter, r *http.Request) {
+	b, _ := json.Marshal(middleware.Data())
+	w.Write(b)
 }
 
-// getLinks returns an arry of LinkResult, it is a wrappper to cover "all types
-// of link requests.
-//
-// typ specifies the typ of handler the links are for. 0 is the basic home-handler
-// the where var can be omitted. 1 is for the wasfuer handler, the where var must
-// be user. And 2 is for a general search and the where var must be a searchterm.
-//
-// The page var is used for the "limit 0, x" stuff for the pagination and sets the
-// current page.
-func getLinks(typ, page int, where string) (result []LinkResult, err error) {
-	var offset int
+// =============== Data retrieving stuff ===============
+func getHomeLinks(page int) ([]LinkResult, int, error) {
+	links, err := getLinks("select id, user, url, time from links order by id desc limit $1, $2;", (page * linksperpage), linksperpage)
+	return links, totalPages("select count(*) from links;"), err
+}
+
+func getWasfürLinks(page int, für string) ([]LinkResult, int, error) {
+	links, err := getLinks(
+		"select id, user, url, time from links where instr(post, 'was für') > 0 and instr(post, $1) > 0 order by id desc limit $2, $3;",
+		für, (page * linksperpage), linksperpage)
+	return links, totalPages("select count(*) from links where instr(post, 'was für') > 0 and instr(post, $1) > 0 order by id desc limit $2, $3;", für, (page * linksperpage), linksperpage), err
+}
+
+func getSearchLinks(page int, term string) ([]LinkResult, int, error) {
+	links, err := getLinks("select id, user, url, time from links where instr(post, $1) > 0 order by id desc limit $2, $3;",
+		term, (page * linksperpage), linksperpage)
+	return links, totalPages("select count(*) from links where instr(post, $1) > 0 order by id desc limit $2, $3;", term, (page * linksperpage), linksperpage), err
+}
+
+func getLinks(query string, args ...interface{}) (result []LinkResult, err error) {
+	// mind the order of $1 $2 $3!!! in your query. The matching variables have to be in the same order!!
 	result = make([]LinkResult, 0)
-
-	if page < 0 { // prevent negative pagecounts
-		page = 0
-	}
-	offset = page * linksperpage
-
-	// create query
-	query := "select id, user, url, time from links "
-
-	switch typ {
-	case 0:
-		query += " order by id desc limit $1, $2;"
-		break
-	case 1: // wasfuer
-		if query += "where instr(post, 'was für') > 0 and instr(post, $1) > 0 order by id desc limit $2, $3;"; where == "" {
-			return result, errors.New("where variable must be set when using typ 1")
-		}
-		break
-	case 2: // normal search
-		if query += "where instr(src, $1) > 0 order by id desc limit $2, $3"; where == "" {
-			return result, errors.New("where variable must be set when using typ 2")
-		}
-	}
 
 	// open Connection
 	db := Db{}
 	db.Open()
+	defer db.Close()
 
 	err = db.Prepare(query)
 	if err != nil {
 		log.Println(err.Error())
-		db.Close()
 		return result, err
 	}
 
-	switch typ {
-	case 0:
-		err = db.QueryStmt(offset, linksperpage)
-		break
-	case 1:
-		err = db.QueryStmt(where, offset, linksperpage)
-		break
-	case 2:
-		// will be changed when the source content is served from another
-		// table
-		err = db.QueryStmt(where, offset, linksperpage)
-		break
-	}
+	err = db.QueryStmt(args...)
 	if err != nil {
 		log.Println(err.Error())
-		db.Close()
 		return result, err
 	}
-	defer db.Close()
 
 	var id int64
 	var user, url string
@@ -281,16 +217,50 @@ func getLinks(typ, page int, where string) (result []LinkResult, err error) {
 	return result, nil
 }
 
+// =============== Data helper functions ===============
+func totalLinks(query string, args ...interface{}) int {
+	var count int
+	var err error
+	db := Db{}
+	db.Open()
+
+	if args == nil {
+		err = db.Query(query)
+	} else {
+		err = db.Prepare(query)
+		if err != nil {
+			log.Println(err.Error())
+			return 0
+		}
+		err = db.QueryStmt(args...)
+	}
+
+	if err != nil {
+		log.Println(err.Error())
+		return 0
+	}
+	db.ResultRows.Next()
+	db.ResultRows.Scan(&count)
+	db.Close()
+	return count
+}
+
+func totalPages(query string, args ...interface{}) int {
+	return int(math.Ceil(float64(totalLinks(query, args...)) / float64(linksperpage)))
+}
+
+// =============== render HTML page functions ===============
+func buildPagintion(currentPage, totalPages int) []int {
+	var pagination []int
+	for i := range iter(totalPages) {
+
+		if i == 0 || i == totalPages-1 || ((i >= currentPage-2) && (i <= currentPage+2)) {
+			pagination = append(pagination, i)
+		}
+	}
+	return pagination
+}
+
 func iter(n int) []struct{} {
 	return make([]struct{}, n)
 }
-
-/*
-	Ideen von soda:
-		- Links mit "was für" direkt in der Liste mit "von $user am $datum für $user" markieren
-		- je nach Mime Typ des Links den Hintergrund des <li> Elements anpassen
-
-	Ideen von svbito:
-		- "mach ne anständige json api, faggot" :>
-
-*/
