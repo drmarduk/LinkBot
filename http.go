@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"html/template"
+	"io"
 	"log"
 	"math"
 	"net/http"
@@ -82,6 +83,15 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
 func wasfuerHandler(w http.ResponseWriter, r *http.Request) {
 	var für string = strings.Replace(r.URL.Path, "/wasfuer/", "", 1)
+	if für == "" {
+		template.Must(template.ParseFiles("html/error.html", "html/base.html")).Execute(w, struct {
+			IsError bool
+			Msg     string
+		}{
+			true,
+			"errror"})
+		return
+	}
 	httpRes := HttpResponse{}
 	var page, total int
 	var err error
@@ -115,6 +125,7 @@ func searchFormHandler(w http.ResponseWriter, r *http.Request) {
 	if len(x) > 1 {
 		p, t = x[0], x[1]
 	} else {
+		template.Must(template.ParseFiles("html/error.html", "html/base.html")).Execute(w, nil)
 		return // ordentlich abbrechen, wenn falsche Anzahl an parametern gegeben ist
 	}
 
@@ -236,12 +247,30 @@ func totalPages(query string, args ...interface{}) int {
 // =============== render HTML page functions ===============
 func renderPage(w http.ResponseWriter, tpl string, result *HttpResponse) {
 	result.Pagination.Pagination = buildPagintion(result.Pagination.CurrentPage, result.Pagination.TotalPages)
-	temp, err := template.ParseFiles("html/" + tpl)
+	temp := template.Must(template.ParseFiles("html/"+tpl, "html/base.html"))
+	//if err != nil {
+	//		log.Println(err.Error())
+	//	return
+	//}
+	temp.Execute(w, result)
+}
+
+func renderError(w http.ResponseWriter, ErrorMsg string) {
+	// TODO do foo
+	temp, err := template.ParseFiles("html/error.html", "html/base.html")
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("renderError: error while error, nice -.- " + err.Error())
+		io.WriteString(w, "banane. -.-")
 		return
 	}
-	temp.Execute(w, result)
+	e := struct {
+		IsError bool
+		Msg     string
+	}{
+		true,
+		ErrorMsg,
+	}
+	temp.Execute(w, e)
 }
 
 func buildPagintion(currentPage, totalPages int) []int {
