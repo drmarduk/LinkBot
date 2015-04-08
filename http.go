@@ -84,12 +84,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 func wasfuerHandler(w http.ResponseWriter, r *http.Request) {
 	var für string = strings.Replace(r.URL.Path, "/wasfuer/", "", 1)
 	if für == "" {
-		template.Must(template.ParseFiles("html/error.html", "html/base.html")).Execute(w, struct {
-			IsError bool
-			Msg     string
-		}{
-			true,
-			"errror"})
+		// falls kein "für nick" gegeben ist, dann alle möglichen anzeigen
 		return
 	}
 	httpRes := HttpResponse{}
@@ -163,15 +158,16 @@ func getHomeLinks(page int) ([]LinkResult, int, error) {
 
 func getWasfürLinks(page int, für string) ([]LinkResult, int, error) {
 	links, err := getLinks(
-		"where instr(post, 'was für') > 0 and instr(post, $1) > 0 order by id desc limit $2, $3;",
+		//"where instr(post, 'was für') > 0 and instr(post, $1) > 0 order by id desc limit $2, $3;",
+		"where post like '%was für%' and post like $1 order by id desc limit $2, $3;", // debian wheezy supports currently 3.7.13, instr() is available in 3.7.15 -.-
 		für, (page * linksperpage), linksperpage)
-	return links, totalPages("where instr(post, 'was für') > 0 and instr(post, $1) > 0;", für), err
+	return links, totalPages("where post like '%was für%' and post like $1 > 0;", für), err
 }
 
 func getSearchLinks(page int, term string) ([]LinkResult, int, error) {
-	links, err := getLinks("where instr(post, $1) > 0 order by id desc limit $2, $3;",
+	links, err := getLinks("where post like $1 order by id desc limit $2, $3;",
 		term, (page * linksperpage), linksperpage)
-	return links, totalPages("where instr(post, $1) > 0;", term), err
+	return links, totalPages("where post like $1 > 0;", term), err
 }
 
 func getLinks(query string, args ...interface{}) (result []LinkResult, err error) {
