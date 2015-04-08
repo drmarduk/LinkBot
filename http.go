@@ -163,21 +163,21 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 
 // =============== Data retrieving stuff ===============
 func getHomeLinks(page int) ([]LinkResult, int, error) {
-	links, err := getLinks("select id, user, url, time from links order by id desc limit $1, $2;", (page * linksperpage), linksperpage)
-	return links, totalPages("select count(*) from links;"), err
+	links, err := getLinks("order by id desc limit $1, $2;", (page * linksperpage), linksperpage)
+	return links, totalPages(";"), err
 }
 
 func getWasfürLinks(page int, für string) ([]LinkResult, int, error) {
 	links, err := getLinks(
-		"select id, user, url, time from links where instr(post, 'was für') > 0 and instr(post, $1) > 0 order by id desc limit $2, $3;",
+		"where instr(post, 'was für') > 0 and instr(post, $1) > 0 order by id desc limit $2, $3;",
 		für, (page * linksperpage), linksperpage)
-	return links, totalPages("select count(*) from links where instr(post, 'was für') > 0 and instr(post, $1) > 0 order by id desc limit $2, $3;", für, (page * linksperpage), linksperpage), err
+	return links, totalPages("where instr(post, 'was für') > 0 and instr(post, $1) > 0 order by id desc limit $2, $3;", für, (page * linksperpage), linksperpage), err
 }
 
 func getSearchLinks(page int, term string) ([]LinkResult, int, error) {
-	links, err := getLinks("select id, user, url, time from links where instr(post, $1) > 0 order by id desc limit $2, $3;",
+	links, err := getLinks("where instr(post, $1) > 0 order by id desc limit $2, $3;",
 		term, (page * linksperpage), linksperpage)
-	return links, totalPages("select count(*) from links where instr(post, $1) > 0 order by id desc limit $2, $3;", term, (page * linksperpage), linksperpage), err
+	return links, totalPages("where instr(post, $1) > 0 order by id desc limit $2, $3;", term, (page * linksperpage), linksperpage), err
 }
 
 func getLinks(query string, args ...interface{}) (result []LinkResult, err error) {
@@ -189,7 +189,7 @@ func getLinks(query string, args ...interface{}) (result []LinkResult, err error
 	db.Open()
 	defer db.Close()
 
-	err = db.Prepare(query)
+	err = db.Prepare("select id, user, url, time from links " + query)
 	if err != nil {
 		log.Println(err.Error())
 		return result, err
@@ -223,6 +223,7 @@ func totalLinks(query string, args ...interface{}) int {
 	var err error
 	db := Db{}
 	db.Open()
+	query = "select count(*) from links " + query
 
 	if args == nil {
 		err = db.Query(query)
