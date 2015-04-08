@@ -77,13 +77,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	// pagination
 	httpRes.Pagination.TotalPages = total
 	httpRes.Pagination.CurrentPage = page
-	httpRes.Pagination.Pagination = buildPagintion(page, httpRes.Pagination.TotalPages)
-
-	temp, err := template.ParseFiles("html/index.html")
-	if err != nil {
-		log.Println(err.Error())
-	}
-	temp.Execute(w, &httpRes)
+	renderPage(w, "index.html", &httpRes)
 }
 
 func wasfuerHandler(w http.ResponseWriter, r *http.Request) {
@@ -107,13 +101,7 @@ func wasfuerHandler(w http.ResponseWriter, r *http.Request) {
 	// pagination
 	httpRes.Pagination.TotalPages = total
 	httpRes.Pagination.CurrentPage = page
-	httpRes.Pagination.Pagination = buildPagintion(page, httpRes.Pagination.TotalPages)
-
-	temp, err := template.ParseFiles("html/index.html")
-	if err != nil {
-		log.Println(err.Error())
-	}
-	temp.Execute(w, &httpRes)
+	renderPage(w, "index.html", &httpRes)
 }
 
 func searchFormHandler(w http.ResponseWriter, r *http.Request) {
@@ -140,16 +128,11 @@ func searchFormHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("search: " + err.Error())
 	}
 
-	// pagination
+	// render
 	httpRes.Pagination.TotalPages = total
 	httpRes.Pagination.CurrentPage = page
-	httpRes.Pagination.Pagination = buildPagintion(page, httpRes.Pagination.TotalPages)
+	renderPage(w, "index.html", &httpRes)
 
-	temp, err := template.ParseFiles("html/index.html")
-	if err != nil {
-		log.Println(err.Error())
-	}
-	temp.Execute(w, &httpRes)
 }
 
 func staticHandler(w http.ResponseWriter, r *http.Request) {
@@ -171,13 +154,13 @@ func getWasfürLinks(page int, für string) ([]LinkResult, int, error) {
 	links, err := getLinks(
 		"where instr(post, 'was für') > 0 and instr(post, $1) > 0 order by id desc limit $2, $3;",
 		für, (page * linksperpage), linksperpage)
-	return links, totalPages("where instr(post, 'was für') > 0 and instr(post, $1) > 0 order by id desc limit $2, $3;", für, (page * linksperpage), linksperpage), err
+	return links, totalPages("where instr(post, 'was für') > 0 and instr(post, $1) > 0;", für), err
 }
 
 func getSearchLinks(page int, term string) ([]LinkResult, int, error) {
 	links, err := getLinks("where instr(post, $1) > 0 order by id desc limit $2, $3;",
 		term, (page * linksperpage), linksperpage)
-	return links, totalPages("where instr(post, $1) > 0 order by id desc limit $2, $3;", term, (page * linksperpage), linksperpage), err
+	return links, totalPages("where instr(post, $1) > 0;", term), err
 }
 
 func getLinks(query string, args ...interface{}) (result []LinkResult, err error) {
@@ -251,6 +234,16 @@ func totalPages(query string, args ...interface{}) int {
 }
 
 // =============== render HTML page functions ===============
+func renderPage(w http.ResponseWriter, tpl string, result *HttpResponse) {
+	result.Pagination.Pagination = buildPagintion(result.Pagination.CurrentPage, result.Pagination.TotalPages)
+	temp, err := template.ParseFiles("html/" + tpl)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+	temp.Execute(w, result)
+}
+
 func buildPagintion(currentPage, totalPages int) []int {
 	var pagination []int
 	for i := range iter(totalPages) {
