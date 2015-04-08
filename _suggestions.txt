@@ -1,0 +1,6 @@
+Ideen von soda:
+	- Links mit "was für" direkt in der Liste mit "von $user am $datum für $user" markieren
+	- je nach Mime Typ des Links den Hintergrund des <li> Elements anpassen
+
+Ideen von svbito:
+	- "mach ne anständige json api, faggot" :>
