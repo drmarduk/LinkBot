@@ -34,11 +34,12 @@
 				<ul class="uk-list uk-list-line" id="linklist">
 					{{range $i, $e := .Results}}
 						<li class='lstItem'>
-							<div class='lstAvatar' style='background-color: rgba(123, 123, 123, 0.5);'>
+							
+							<div>
+							{{$e.ID}}.
+								 <div class='lstAvatar' style='background-color: rgba(123, 123, 123, 0.5);'>
 								
 							</div>
-							<div>
-								{{$e.ID}}. 
 								
 								<div class='lstUrl'>
 									<a href='{{$e.Url}}'>{{$e.Url}}</a>
