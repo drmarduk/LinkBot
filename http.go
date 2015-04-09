@@ -19,6 +19,7 @@ type LinkResult struct {
 	Url       string
 	Timestamp time.Time
 	TimeStr   string
+	Color     string
 }
 
 type Pages struct {
@@ -172,7 +173,7 @@ func getLinks(query string, args ...interface{}) (result []LinkResult, err error
 	db.Open()
 	defer db.Close()
 
-	err = db.Prepare("select id, user, url, time from links " + query)
+	err = db.Prepare("select id, user, url, time, color from links " + query)
 	if err != nil {
 		log.Println(err.Error())
 		return result, err
@@ -185,17 +186,17 @@ func getLinks(query string, args ...interface{}) (result []LinkResult, err error
 	}
 
 	var id int64
-	var user, url string
+	var user, url, color string
 	var timestamp time.Time
 
 	for db.ResultRows.Next() {
-		err = db.ResultRows.Scan(&id, &user, &url, &timestamp)
+		err = db.ResultRows.Scan(&id, &user, &url, &timestamp, &color)
 
 		if err != nil {
 			log.Println(err.Error())
 			continue
 		}
-		result = append(result, LinkResult{ID: id, User: user, Url: url, Timestamp: timestamp, TimeStr: timestamp.Format("02.01.2006 15:04")})
+		result = append(result, LinkResult{ID: id, User: user, Url: url, Timestamp: timestamp, TimeStr: timestamp.Format("02.01.2006 15:04"), Color: color})
 	}
 	return result, nil
 }

@@ -63,3 +63,12 @@
 
 	font-size: 9pt;
 }
+
+.lstAvatar {
+	display: inline;
+	width: 40px;
+	height: 40px;
+	margin-right: 5px;
+	
+	float: left;
+}
