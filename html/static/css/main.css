@@ -1,9 +1,7 @@
 #mainContainer {
-	
 }
 
 #linklistContainer {
-	
 	margin-left: 20px;
 }
 
@@ -24,11 +22,10 @@
 }
 
 #lst {
-	
 }
+
 #navdiv {
 	display: block;
-	
 }
 
 #navbar {
@@ -60,16 +57,19 @@
 .lstMeta {
 	margin-left: 16px;
 	margin-top: 0px;
-
 	font-size: 9pt;
 }
 
 .lstAvatar {
 	display: inline;
-	width: 40px;
+	width: 5px;
 	height: 40px;
-	margin-right: 5px;
-	
+	margin-right: 7px;	
+	background-color: rgb(123, 123, 123);	
 	float: left;
-		
+}
+
+.lstId {
+	display: inline;
+	float: left;
 }
