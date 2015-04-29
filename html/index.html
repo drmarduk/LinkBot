@@ -23,8 +23,8 @@
 							<li><a href="/wasfuer">Was für ...</a></li>
 						</ul>
 						<div class="uk-navbar-content uk-navbar-flip">
-							<form method="get" action="/search/0/" class="uk-form uk-margin-remove uk-display-inline-block">
-								<input type="text" name="term" placeholder="Suche">
+							<form id="frmSearch" class="uk-form uk-margin-remove uk-display-inline-block" action="/search/0/" onsubmit="javascript:fnSubmit(); return false;">
+								<input type="text" id ="frmTerm" name="term" placeholder="Suche">
 								<button class="uk-button uk-button-primary">Suche</button>
 							</form>
 						</div>
@@ -40,7 +40,7 @@
 								<div class='lstUrl'>
 									<a href='{{$e.Url}}'>{{$e.Url}}</a>
 								</div>
-								<div class='lstMeta'><img src='http://www.google.com/s2/favicons?domain={{$e.Url}}'> von {{$e.User}} am {{$e.TimeStr}}</div>
+								<div class='lstMeta'><img src='https://www.google.com/s2/favicons?domain={{$e.Url}}'> von {{$e.User}} am {{$e.TimeStr}}</div>
 							</div>
 						</li>
 					{{end}}
@@ -49,11 +49,13 @@
 				<div id="pagination">
 					<ul class="uk-pagination">
 						{{$c := .Pagination.CurrentPage}}
+						{{$prefix := .Pagination.UrlPrefix}}
+						{{$suffix := .Pagination.UrlSuffix}}
 						{{range $_, $i := .Pagination.Pagination}}
 							{{if eq $i $c}}
 								<li class='uk-active'><span>{{$i}}</span></li>
 							{{else}}
-								<li><a href='/{{$i}}'>{{$i}}</a></li>
+								<li><a href='{{$prefix}}{{$i}}{{$suffix}}'>{{$i}}</a></li>
 							{{end}}
 						{{end}}
 					</ul>
@@ -62,4 +64,12 @@
 			
 		</div>
 	</body>
+
+	<script type="text/javascript">
+		var fnSubmit = function() { 
+			var url = "/search/0/" + document.getElementById("frmTerm").value;
+			console.log(url);
+			window.location = url;
+		}
+	</script>
 </html>
