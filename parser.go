@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"log"
 	"net/http"
 	"net/url"
@@ -30,9 +31,15 @@ func StartParser() error {
 			if u.Scheme == "" {
 				x.Url = "http://" + x.Url
 			}
-			resp, err := http.Get(x.Url)
+
+			tr := &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			}
+			client := &http.Client{Transport: tr}
+
+			resp, err := client.Get(x.Url)
 			if err != nil {
-				log.Printf("Cannot connect to %s, ignoring", x.Url)
+				log.Printf("Cannot connect to %s, ignoring: %s\n", x.Url, err.Error())
 				continue
 			}
 			resp.Body.Close()

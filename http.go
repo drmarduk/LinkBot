@@ -25,6 +25,8 @@ type Pages struct {
 	Pagination  []int
 	CurrentPage int
 	TotalPages  int
+	UrlPrefix   string
+	UrlSuffix   string
 }
 
 type HttpResponse struct {
@@ -77,6 +79,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	// pagination
 	httpRes.Pagination.TotalPages = total
 	httpRes.Pagination.CurrentPage = page
+	httpRes.Pagination.UrlPrefix = "/"
 	renderPage(w, "index.html", &httpRes)
 }
 
@@ -105,6 +108,7 @@ func wasfuerHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func searchFormHandler(w http.ResponseWriter, r *http.Request) {
+	// URL: /search/0/$request string or /search/0/?term=$request string
 	var tmp string = strings.Replace(r.URL.Path, "/search/", "", 1)
 	httpRes := HttpResponse{}
 	var page, total int
@@ -114,9 +118,14 @@ func searchFormHandler(w http.ResponseWriter, r *http.Request) {
 	x := strings.Split(tmp, "/")
 	if len(x) > 1 {
 		p, t = x[0], x[1]
+	} else if len(r.URL.RawQuery) > 5 {
+		p = x[0]
+		t = strings.Replace(r.URL.RawQuery, "term=", "", 1) // no-js
 	} else {
-		return // ordentlich abbrechen, wenn falsche Anzahl an parametern gegeben ist
+		return
 	}
+
+	log.Println("Query: " + t)
 
 	page, err = strconv.Atoi(p)
 	if err != nil {
@@ -131,6 +140,8 @@ func searchFormHandler(w http.ResponseWriter, r *http.Request) {
 	// render
 	httpRes.Pagination.TotalPages = total
 	httpRes.Pagination.CurrentPage = page
+	httpRes.Pagination.UrlPrefix = "/search/"
+	httpRes.Pagination.UrlSuffix = "/" + t // might be xss'able?
 	renderPage(w, "index.html", &httpRes)
 
 }
@@ -158,9 +169,9 @@ func getWasfürLinks(page int, für string) ([]LinkResult, int, error) {
 }
 
 func getSearchLinks(page int, term string) ([]LinkResult, int, error) {
-	links, err := getLinks("where instr(post, $1) > 0 order by id desc limit $2, $3;",
-		term, (page * linksperpage), linksperpage)
-	return links, totalPages("where instr(post, $1) > 0;", term), err
+	links, err := getLinks(" join search on links.id = search.id where instr(links.post, $1) > 0 or instr(search.src, $2) > 0 order by links.id desc limit $3, $4;",
+		term, term, (page * linksperpage), linksperpage)
+	return links, totalPages(" join search on links.id = search.id where instr(links.post, $1) > 0 or instr(search.src, $2) > 0", term, term), err
 }
 
 func getLinks(query string, args ...interface{}) (result []LinkResult, err error) {
@@ -172,7 +183,7 @@ func getLinks(query string, args ...interface{}) (result []LinkResult, err error
 	db.Open()
 	defer db.Close()
 
-	err = db.Prepare("select id, user, url, time from links " + query)
+	err = db.Prepare("select links.id, links.user, links.url, links.time from links " + query)
 	if err != nil {
 		log.Println(err.Error())
 		return result, err

@@ -93,7 +93,9 @@ func (db *Db) QueryStmt(args ...interface{}) error {
 // Function to install tables
 func InstallTables() {
 	var tables []string = []string{
-		"CREATE TABLE IF NOT EXISTS links(id integer not null primary key, user text, url text, time datetime, post text, mime text, header text, src text);",
+		"CREATE TABLE IF NOT EXISTS links(id integer not null, user text, url text, time datetime, post text, mime text, primary key(id));",
+		"CREATE VIRTUAL TABLE IF NOT EXISTS search USING fts4(id, url, src);",
+		"CREATE INDEX IF NOT EXISTS user ON links (user ASC);",
 	}
 	db := &Db{}
 	db.Open()
@@ -101,6 +103,7 @@ func InstallTables() {
 		err := db.Execute(s)
 		if err != nil {
 			log.Println(err.Error())
+			panic(err)
 		}
 	}
 	db.Close()

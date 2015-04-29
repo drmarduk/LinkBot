@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"errors"
 	"log"
 	"net/http"
 	"os/exec"
@@ -19,14 +19,26 @@ func StartCrawler() {
 		db := Db{}
 		db.Open()
 		defer db.Close()
-		query := "update links set src = $1 where id = $2"
+		query := "update links set mime = $1 where id = $2"
 
 		err = db.Prepare(query)
 		if err != nil {
 			log.Println(err.Error())
 			continue
 		}
-		err = db.ExecuteStmt(src.Content, l.Id)
+		err = db.ExecuteStmt(src.MIME, l.Id)
+		if err != nil {
+			log.Println(err.Error())
+			continue
+		}
+
+		query = "insert into search(id, url, src) values($1, $2, $3)"
+		err = db.Prepare(query)
+		if err != nil {
+			log.Println(err.Error())
+			continue
+		}
+		err = db.ExecuteStmt(l.Id, l.Url, src.Content)
 		if err != nil {
 			log.Println(err.Error())
 			continue
@@ -37,13 +49,16 @@ func StartCrawler() {
 //TODO: this does not limit the filesize.
 func get(url string) (LinkContent, error) {
 	c := LinkContent{}
-	out, err := exec.Command("lynx", "--dump", "-nolist", url).CombinedOutput()
+
+	out, err := exec.Command("lynx", "-nolist", "-dump", url).CombinedOutput()
 	if err != nil {
+		log.Println("Crawler.Get:" + err.Error())
 		return c, err
 	}
 	if len(out) == 0 {
-		return c, fmt.Errorf("%s: empty response")
+		return c, errors.New("Response is empty.")
 	}
+
 	c.MIME = http.DetectContentType(out)
 	if strings.HasPrefix(c.MIME, "text") {
 		c.Content = string(out)
