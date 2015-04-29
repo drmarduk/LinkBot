@@ -2,3 +2,5 @@
 *.db
 links.db
 data/
+*.lss
+*.cfg
