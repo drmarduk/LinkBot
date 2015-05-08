@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/tls"
+	"fmt"
 	"log"
 	"time"
 
@@ -43,4 +44,11 @@ func StartIrc() {
 			PostReceiver <- p
 		}
 	}
+}
+
+func ircMessage(channel, msg string) {
+	var m string = fmt.Sprintf("PRIVMSG %s :%s\r\n", channel, msg)
+	// PRIVMSG #test :Voting time is 600 seconds.
+	log.Println(m)
+	ctxIrc.In <- m
 }
