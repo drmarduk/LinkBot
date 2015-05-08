@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/tls"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -30,6 +31,14 @@ func StartParser() error {
 			//assuming a sane default
 			if u.Scheme == "" {
 				x.Url = "http://" + x.Url
+			}
+
+			// check for duplicate
+			result, dup := checkDuplicate(x)
+			if dup {
+				log.Println("Yep, dup found")
+				ircMessage(*cfgChannel, fmt.Sprintf("Obacht! Repostalarm: %s hats am %s schon gepostet.", result.User, result.Timestamp.Format("02.01.2006 15:04")))
+				continue
 			}
 
 			tr := &http.Transport{
@@ -90,4 +99,38 @@ func addLink(link *Link) bool {
 
 	CrawlReceiver <- link
 	return true
+}
+
+func checkDuplicate(link *Link) (Link, bool) {
+	var result Link
+	result.User = ""
+	db := Db{}
+	db.Open()
+	defer db.Close()
+
+	err := db.Prepare("Select id, user, url, time from links where url = $1 limit 0, 1")
+	if err != nil {
+		log.Println("checkDuplicate: %s" + err.Error())
+		return result, false
+	}
+
+	err = db.QueryStmt(link.Url)
+	if err != nil {
+		log.Println("checkDuplicate: " + err.Error())
+		return result, false
+	}
+
+	defer db.ResultRows.Close()
+	for db.ResultRows.Next() {
+		err = db.ResultRows.Scan(&result.Id, &result.User, &result.Url, &result.Timestamp)
+		if err != nil {
+			log.Println("checkDuplicate: " + err.Error())
+			continue
+		}
+	}
+	log.Printf("%v", result)
+	if result.User == "" { // hm, doofer check, besser machen fgt
+		return result, false // kein Duplikat
+	}
+	return result, true // true falls der Link schon in der DB ist, ansonsten false
 }
