@@ -32,6 +32,9 @@ func StartParser() error {
 		for _, l := range links {
 			x := &Link{User: post.User, Url: l, Post: post.Message, Timestamp: post.Timestamp}
 
+			if x.User == "g0bot" {
+				continue // wir nehmen keine Links vom AAAALT brüller
+			}
 			u, err := url.Parse(x.Url)
 			if err != nil {
 				log.Println("unable to parse URL", x.Url)
