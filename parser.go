@@ -4,9 +4,11 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 )
 
 var (
@@ -14,6 +16,13 @@ var (
 	// Versuch eine leserliche URl regex zu basteln
 	// urlregex *regexp.Regexp = regexp.MustCompile(`[a-zA-Z]{3,9}:\/\/((.*)\.)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,9}(:[0-9]{1,5})?(/(.*)?)?`)
 )
+
+var sprueche []string = []string{
+	"Obacht! %s hat es am %s schon gepostet.",
+	"Aufmerksamkeitsspanne wie ne Fruchtfliege (%s von %s)",
+	"AAAALT! (%s von %s)",
+	"Dududu! (%s von %s)",
+}
 
 func StartParser() error {
 	for {
@@ -36,8 +45,11 @@ func StartParser() error {
 			// check for duplicate
 			result, dup := checkDuplicate(x)
 			if dup {
-				log.Println("Yep, dup found")
-				ircMessage(*cfgChannel, fmt.Sprintf("Obacht! Repostalarm: %s hats am %s schon gepostet.", result.User, result.Timestamp.Format("02.01.2006 15:04")))
+
+				// wenn *repost* im Post ist, dann nichts sagen
+				if !strings.Contains(x.Post, "*repost*") {
+					ircMessage(*cfgChannel, fmt.Sprintf(getSpruch(), result.Timestamp.Format("02.01.2006 15:04"), result.User))
+				}
 				continue
 			}
 
@@ -133,4 +145,8 @@ func checkDuplicate(link *Link) (Link, bool) {
 		return result, false // kein Duplikat
 	}
 	return result, true // true falls der Link schon in der DB ist, ansonsten false
+}
+
+func getSpruch() string {
+	return sprueche[rand.Intn(len(sprueche))]
 }
