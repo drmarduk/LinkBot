@@ -18,17 +18,18 @@ func StartCrawler() {
 		}
 		db := Db{}
 		db.Open()
-		defer db.Close()
 		query := "update links set mime = $1 where id = $2"
 
 		err = db.Prepare(query)
 		if err != nil {
 			log.Println(err.Error())
+            db.Close()
 			continue
 		}
 		err = db.ExecuteStmt(src.MIME, l.Id)
 		if err != nil {
 			log.Println(err.Error())
+            db.Close()
 			continue
 		}
 
@@ -36,13 +37,16 @@ func StartCrawler() {
 		err = db.Prepare(query)
 		if err != nil {
 			log.Println(err.Error())
+            db.Close()
 			continue
 		}
 		err = db.ExecuteStmt(l.Id, l.Url, src.Content)
 		if err != nil {
 			log.Println(err.Error())
+            db.Close()
 			continue
 		}
+        db.Close() 
 	}
 }
 
