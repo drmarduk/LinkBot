@@ -23,13 +23,13 @@ func StartCrawler() {
 		err = db.Prepare(query)
 		if err != nil {
 			log.Println(err.Error())
-            db.Close()
+			db.Close()
 			continue
 		}
 		err = db.ExecuteStmt(src.MIME, l.Id)
 		if err != nil {
 			log.Println(err.Error())
-            db.Close()
+			db.Close()
 			continue
 		}
 
@@ -37,16 +37,16 @@ func StartCrawler() {
 		err = db.Prepare(query)
 		if err != nil {
 			log.Println(err.Error())
-            db.Close()
+			db.Close()
 			continue
 		}
 		err = db.ExecuteStmt(l.Id, l.Url, src.Content)
 		if err != nil {
 			log.Println(err.Error())
-            db.Close()
+			db.Close()
 			continue
 		}
-        db.Close() 
+		db.Close()
 	}
 }
 

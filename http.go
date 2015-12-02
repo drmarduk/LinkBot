@@ -6,10 +6,10 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
-    "os"
 
 	"github.com/thoas/stats"
 )
@@ -43,10 +43,10 @@ var (
 )
 
 func StartHttp() {
-    hwd, err := os.OpenFile("access.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-    if err != nil {
-        panic(err)
-    }
+	hwd, err := os.OpenFile("access.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		panic(err)
+	}
 	middleware = stats.New()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", homeHandler)
