@@ -4,3 +4,6 @@ links.db
 data/
 *.lss
 *.cfg
+start.sh
+LinkBot
+access.log
