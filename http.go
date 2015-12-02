@@ -54,6 +54,7 @@ func StartHttp() {
 	mux.HandleFunc("/wasfuer/", wasfuerHandler)
 	mux.HandleFunc("/search/", searchFormHandler)
 	mux.HandleFunc("/stats", statsHandler)
+	mux.HandleFunc("/filter/", filterHandler)
 
 	handler := middleware.Handler(mux)
 
@@ -151,6 +152,38 @@ func searchFormHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func filterHandler(w http.ResponseWriter, r *http.Request) {
+	// URL: /filter/0/$filter/$value nojs fuck it
+	var tmp string = strings.Replace(r.URL.Path, "/filter/", "", 1)
+	httpRes := HttpResponse{}
+
+	var page, total int
+	var err error
+	var p, f, v string
+	x := strings.Split(tmp, "/")
+	if len(x) == 3 {
+		p, f, v = x[0], x[1], x[2]
+	} else {
+		// redirect to main page
+		return
+	}
+	page, err = strconv.Atoi(p)
+	if err != nil {
+		page = 0
+	}
+
+	httpRes.Results, total, err = getFilterLinks(page, f, v)
+	if err != nil {
+		log.Println("filter: " + err.Error())
+	}
+
+	httpRes.Pagination.TotalPages = total
+	httpRes.Pagination.CurrentPage = page
+	httpRes.Pagination.UrlPrefix = "/filter/"
+	httpRes.Pagination.UrlSuffix = "/" + f
+	renderPage(w, "index.html", &httpRes)
+}
+
 func staticHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "html/"+r.URL.Path[1:])
 }
@@ -177,6 +210,11 @@ func getSearchLinks(page int, term string) ([]LinkResult, int, error) {
 	links, err := getLinks(" join search on links.id = search.id where instr(links.post, $1) > 0 or instr(search.src, $2) > 0 order by links.id desc limit $3, $4;",
 		term, term, (page * linksperpage), linksperpage)
 	return links, totalPages(" join search on links.id = search.id where instr(links.post, $1) > 0 or instr(search.src, $2) > 0", term, term), err
+}
+
+func getFilterLinks(page int, filter, term string) ([]LinkResult, int, error) {
+	links, err := getLinks(" join search on links.id = search.id where $1 = $2 order by links.id desc limit $4, $5;", filter, term, (page * linksperpage), linksperpage)
+	return links, totalPages(" join search on links.id = search.id where $1 = $2", filter, term), err
 }
 
 func getLinks(query string, args ...interface{}) (result []LinkResult, err error) {
