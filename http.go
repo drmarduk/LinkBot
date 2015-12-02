@@ -50,6 +50,7 @@ func StartHttp() {
 	mux.HandleFunc("/search/", searchFormHandler)
 	mux.HandleFunc("/stats", statsHandler)
 	mux.HandleFunc("/filter/", filterHandler)
+	mux.HandleFunc("/user/", userHandler)
 
 	handler := middleware.Handler(mux)
 
@@ -126,8 +127,6 @@ func searchFormHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("Query: " + t)
-
 	page, err = strconv.Atoi(p)
 	if err != nil {
 		page = 0
@@ -144,7 +143,6 @@ func searchFormHandler(w http.ResponseWriter, r *http.Request) {
 	httpRes.Pagination.UrlPrefix = "/search/"
 	httpRes.Pagination.UrlSuffix = "/" + t // might be xss'able?
 	renderPage(w, "index.html", &httpRes)
-
 }
 
 func filterHandler(w http.ResponseWriter, r *http.Request) {
@@ -179,6 +177,37 @@ func filterHandler(w http.ResponseWriter, r *http.Request) {
 	renderPage(w, "index.html", &httpRes)
 }
 
+func userHandler(w http.ResponseWriter, r *http.Request) {
+	var tmp string = strings.Replace(r.URL.Path, "/user/", "", 1)
+	httpRes := HttpResponse{}
+
+	var page, total int
+	var err error
+	var p, v string // aktuelle page und username
+	x := strings.Split(tmp, "/")
+	if len(x) == 2 {
+		p, v = x[0], x[1]
+	} else {
+		return // dann zurück
+	}
+	page, err = strconv.Atoi(p) // get current page
+	if err != nil {
+		page = 0
+	}
+
+	httpRes.Results, total, err = getFilterLinks(page, "user", v) // todo
+	if err != nil {
+		log.Println("user: " + err.Error())
+	}
+
+	httpRes.Pagination.TotalPages = total
+	httpRes.Pagination.CurrentPage = page
+	httpRes.Pagination.UrlPrefix = "/user/"
+	httpRes.Pagination.UrlSuffix = "/" + v
+
+	renderPage(w, "index.html", &httpRes)
+}
+
 func staticHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "html/"+r.URL.Path[1:])
 }
@@ -208,9 +237,13 @@ func getSearchLinks(page int, term string) ([]LinkResult, int, error) {
 }
 
 func getFilterLinks(page int, filter, term string) ([]LinkResult, int, error) {
-	links, err := getLinks(" join search on links.id = search.id where $1 = $2 order by links.id desc limit $4, $5;", filter, term, (page * linksperpage), linksperpage)
+	links, err := getLinks(" join search on links.id = search.id where $1 = $2 order by links.id desc limit $3, $4;", filter, term, (page * linksperpage), linksperpage)
 	return links, totalPages(" join search on links.id = search.id where $1 = $2", filter, term), err
 }
+
+//func getUserLinks(page int, user, term string) ([]LinkResult, int, error) {
+//	links, err := getLinks(" join search on links.id = search.id where user = $1 order by links.id desc limit $2, $3;", user,
+//}
 
 func getLinks(query string, args ...interface{}) (result []LinkResult, err error) {
 	// mind the order of $1 $2 $3!!! in your query. The matching variables have to be in the same order!!
@@ -239,13 +272,15 @@ func getLinks(query string, args ...interface{}) (result []LinkResult, err error
 
 	for db.ResultRows.Next() {
 		err = db.ResultRows.Scan(&id, &user, &url, &timestamp)
-
+		log.Printf("%v\n", timestamp)
 		if err != nil {
 			log.Println(err.Error())
 			continue
 		}
 		result = append(result, LinkResult{ID: id, User: user, Url: url, Timestamp: timestamp, TimeStr: timestamp.Format("02.01.2006 15:04")})
 	}
+
+	log.Printf("Query: %s Resultsize: %d\n", query, len(result))
 	return result, nil
 }
 

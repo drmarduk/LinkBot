@@ -9,7 +9,7 @@ import (
 )
 
 func (db *Db) Open() {
-	x, err := sql.Open("sqlite3", "file:data/links.db")
+	x, err := sql.Open("sqlite3", "file:data/links.db?loc=UTC+1")
 	if err != nil {
 		log.Println(err.Error())
 	}
