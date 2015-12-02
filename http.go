@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+    "os"
 
 	"github.com/thoas/stats"
 )
@@ -42,6 +43,10 @@ var (
 )
 
 func StartHttp() {
+    hwd, err := os.OpenFile("access.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+    if err != nil {
+        panic(err)
+    }
 	middleware = stats.New()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", homeHandler)
@@ -57,7 +62,7 @@ func StartHttp() {
 	go func() {
 		log.Fatal(http.ListenAndServe(*srvAdress+":80", http.RedirectHandler("https://"+*srvAdress, 301))) // http -> https redirect
 	}()
-	log.Fatal(http.ListenAndServeTLS(*srvAdress+":443", "data/server.crt", "data/server.key", handler))
+	log.Fatal(http.ListenAndServeTLS(*srvAdress+":443", "data/server.crt", "data/server.key", WriteLog(handler, hwd)))
 }
 
 // =============== Handler ===============
