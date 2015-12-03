@@ -24,6 +24,13 @@ var sprueche []string = []string{
 	"Dududu! (%s von %s)",
 }
 
+func TrimSuffix(s, suffix string) string {
+    if strings.HasSuffix(s, suffix) {
+        s = s[:len(s)-len(suffix)]
+    }
+    return s
+}
+
 func StartParser() error {
 	for {
 		post := <-PostReceiver
@@ -42,7 +49,7 @@ func StartParser() error {
 			}
 			//assuming a sane default
 			if u.Scheme == "" {
-				x.Url = "http://" + x.Url
+				x.Url = "http://" + TrimSuffix(x.Url, "/")
 			}
 
 			// check for duplicate
