@@ -78,12 +78,19 @@ func StartParser() error {
 	}
 }
 
+func TrimSuffix(s, suffix string) string {
+	if strings.HasSuffix(s, suffix) {
+		s = s[:len(s)-len(suffix)]
+	}
+	return s
+}
+
 func extractLink(data string) []string {
 	var result []string
 	if urlregex.MatchString(data) {
 		links := urlregex.FindAllString(data, -1)
 		for _, x := range links {
-			result = append(result, x)
+			result = append(result, TrimSuffix(x, "/"))
 		}
 	}
 	return result
