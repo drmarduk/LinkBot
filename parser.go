@@ -33,7 +33,7 @@ func StartParser() error {
 			x := &Link{User: post.User, Url: l, Post: post.Message, Timestamp: post.Timestamp}
 
 			if x.User == "g0bot" {
-				continue // wir nehmen keine Links vom AAAALT brüller
+				continue
 			}
 			u, err := url.Parse(x.Url)
 			if err != nil {
@@ -47,12 +47,8 @@ func StartParser() error {
 
 			// check for duplicate
 			result, dup := checkDuplicate(x)
-			if dup {
-
-				// wenn *repost* im Post ist, dann nichts sagen
-				if !strings.Contains(x.Post, "*repost*") {
-					ircMessage(*cfgChannel, fmt.Sprintf(getSpruch(), result.Timestamp.Format("02.01.2006 15:04"), result.User))
-				}
+			if dup && !strings.Contains(post.Message, result.User) {
+				ircMessage(*cfgChannel, fmt.Sprintf(getSpruch(), result.Timestamp.Format("02.01.2006 15:04"), result.User))
 				continue
 			}
 
