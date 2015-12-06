@@ -47,8 +47,10 @@ func StartParser() error {
 
 			// check for duplicate
 			result, dup := checkDuplicate(x)
-			if dup && !strings.Contains(post.Message, result.User) {
-				ircMessage(*cfgChannel, fmt.Sprintf(getSpruch(), result.Timestamp.Format("02.01.2006 15:04"), result.User))
+			if dup {
+				if !strings.Contains(post.Message, result.User) {
+					ircMessage(*cfgChannel, fmt.Sprintf(getSpruch(), result.Timestamp.Format("02.01.2006 15:04"), result.User))
+				}
 				continue
 			}
 
