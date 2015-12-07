@@ -22,7 +22,7 @@ var (
 func main() {
 	flag.Parse()
 
-	InstallTables()
+	//InstallTables()
 	PostReceiver = make(chan (*Post))
 	CrawlReceiver = make(chan (*Link))
 
