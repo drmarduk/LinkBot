@@ -33,7 +33,7 @@ func StartParser() error {
 			x := &Link{User: post.User, Url: l, Post: post.Message, Timestamp: post.Timestamp}
 
 			if x.User == "g0bot" {
-				continue // wir nehmen keine Links vom AAAALT brüller
+				continue
 			}
 			u, err := url.Parse(x.Url)
 			if err != nil {
@@ -48,9 +48,7 @@ func StartParser() error {
 			// check for duplicate
 			result, dup := checkDuplicate(x)
 			if dup {
-
-				// wenn *repost* im Post ist, dann nichts sagen
-				if !strings.Contains(x.Post, "*repost*") {
+				if !strings.Contains(post.Message, result.User) {
 					ircMessage(*cfgChannel, fmt.Sprintf(getSpruch(), result.Timestamp.Format("02.01.2006 15:04"), result.User))
 				}
 				continue
@@ -78,12 +76,19 @@ func StartParser() error {
 	}
 }
 
+func TrimSuffix(s, suffix string) string {
+	if strings.HasSuffix(s, suffix) {
+		s = s[:len(s)-len(suffix)]
+	}
+	return s
+}
+
 func extractLink(data string) []string {
 	var result []string
 	if urlregex.MatchString(data) {
 		links := urlregex.FindAllString(data, -1)
 		for _, x := range links {
-			result = append(result, x)
+			result = append(result, TrimSuffix(x, "/"))
 		}
 	}
 	return result
