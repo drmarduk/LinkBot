@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"html/template"
 	"log"
@@ -62,7 +63,10 @@ func StartHttp() {
 	go func() {
 		log.Fatal(http.ListenAndServe(*srvAdress+":80", http.RedirectHandler("https://"+*srvAdress, 301))) // http -> https redirect
 	}()
-	log.Fatal(http.ListenAndServeTLS(*srvAdress+":443", "data/server.crt", "data/server.key", WriteLog(handler, hwd)))
+
+	config := &tls.Config{MinVersion: tls.VersionTLS10}
+	server := http.Server{Addr: *srvAdress + ":443", Handler: WriteLog(handler, hwd), TLSConfig: config}
+	log.Fatal(server.ListenAndServeTLS("data/server.crt", "data/server.key"))
 }
 
 // =============== Handler ===============
