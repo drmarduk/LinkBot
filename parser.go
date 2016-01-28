@@ -64,7 +64,6 @@ func StartParser() error {
 			_size, err := client.Head(x.Url)
 			if err != nil {
 				log.Println("unable to get HEAD from " + x.Url + ": " + err.Error())
-				_size.Body.Close()
 				continue
 			}
 
