@@ -17,6 +17,7 @@ type Link struct {
 	Url       string
 	Post      string
 	Timestamp time.Time
+	Size      int64
 	Content   LinkContent
 }
 

@@ -3,6 +3,8 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -59,12 +61,16 @@ func StartParser() error {
 			}
 			client := &http.Client{Transport: tr}
 
-			resp, err := client.Get(x.Url)
+			_size, err := client.Head(x.Url)
 			if err != nil {
-				log.Printf("Cannot connect to %s, ignoring: %s\n", x.Url, err.Error())
+				log.Println("unable to get HEAD from " + x.Url + ": " + err.Error())
+				_size.Body.Close()
 				continue
 			}
-			resp.Body.Close()
+
+			x.Size = _size.ContentLength
+			io.Copy(ioutil.Discard, _size.Body) // throw any response away, should 0 cause of HEAD
+			_size.Body.Close()
 
 			if addLink(x) {
 				log.Printf("%s: %s\n", post.User, x.Url)
@@ -117,7 +123,11 @@ func addLink(link *Link) bool {
 		return false
 	}
 
-	CrawlReceiver <- link
+	if link.Size < 10000000 { // "crawl" aka download only if < 10MB
+		CrawlReceiver <- link
+		return true
+	}
+	log.Printf("Size exceeds limit, %d Bytes \n", link.Size)
 	return true
 }
 
