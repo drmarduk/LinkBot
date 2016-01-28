@@ -51,6 +51,7 @@ func StartHttp() {
 	middleware = stats.New()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", homeHandler)
+	mux.HandleFunc("/robots.txt", staticHandler)
 	mux.HandleFunc("/static/", staticHandler)
 	mux.HandleFunc("/wasfuer/", wasfuerHandler)
 	mux.HandleFunc("/search/", searchFormHandler)
@@ -263,7 +264,7 @@ func getLinks(query string, args ...interface{}) (result []LinkResult, err error
 	db.Open()
 	defer db.Close()
 
-	err = db.Prepare("select links.id, links.user, links.url, substr(links.time, 0, 30) from links " + query)
+	err = db.Prepare("select links.id, links.user, links.url, links.time from links " + query)
 	if err != nil {
 		log.Println(err.Error())
 		return result, err
