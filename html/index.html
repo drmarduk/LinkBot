@@ -33,7 +33,7 @@
 				</div>
 					
 				<!-- obere Pagination will aimless so -->
-				<div id="pagination">
+				<div id="pagination-top">
 					<ul class="uk-pagination">
 						{{$c := .Pagination.CurrentPage}}
 						{{$prefix := .Pagination.UrlPrefix}}
@@ -55,10 +55,12 @@
 							<!--<div class='lstAvatar'></div>-->
 							<div>
 								<div class='lstId'>{{$e.ID}}.</div>
-								<div class='lstUrl'>
-									<a href='{{$e.Url}}' target='_blank'>{{$e.Url}}</a>
+								<div class='lstData'>
+									<div class='lstUrl'>
+										<a href='{{$e.Url}}' target='_blank'>{{$e.Url}}</a>
+									</div>
+									<div class='lstMeta'><img src='https://www.google.com/s2/favicons?domain={{$e.Url}}'> von {{$e.User}} am {{$e.TimeStr}}</div>
 								</div>
-								<div class='lstMeta'><img src='https://www.google.com/s2/favicons?domain={{$e.Url}}'> von {{$e.User}} am {{$e.TimeStr}}</div>
 							</div>
 						</li>
 					{{end}}
