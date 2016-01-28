@@ -8,3 +8,4 @@ LinkBot
 start.sh
 access.log
 tags
+*.swp
