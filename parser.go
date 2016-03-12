@@ -24,6 +24,11 @@ var sprueche []string = []string{
 	"Aufmerksamkeitsspanne wie ne Fruchtfliege (%s von %s)",
 	"AAAALT! (%s von %s)",
 	"Dududu! (%s von %s)",
+	"Langsam wie ne Omma (%s von %s)",
+	"Kennen wir schon. (%s von %s)",
+	"Ein Zitat vom %s von %s",
+	"Frei nach Goethe: AAALT (%s von %s)",
+	"Ein Plagiat!!! (%s von %s)",
 }
 
 func StartParser() error {
@@ -157,7 +162,6 @@ func checkDuplicate(link *Link) (Link, bool) {
 			continue
 		}
 	}
-	log.Printf("%v", result)
 	if result.User == "" { // hm, doofer check, besser machen fgt
 		return result, false // kein Duplikat
 	}

@@ -282,7 +282,6 @@ func getLinks(query string, args ...interface{}) (result []LinkResult, err error
 
 	for db.ResultRows.Next() {
 		err = db.ResultRows.Scan(&id, &user, &url, &timestamp)
-		log.Printf("%v\n", timestamp)
 		if err != nil {
 			log.Println(err.Error())
 			continue
@@ -290,7 +289,6 @@ func getLinks(query string, args ...interface{}) (result []LinkResult, err error
 		result = append(result, LinkResult{ID: id, User: user, Url: url, Timestamp: timestamp, TimeStr: timestamp.Format("02.01.2006 15:04")})
 	}
 
-	log.Printf("Query: %s Resultsize: %d\n", query, len(result))
 	return result, nil
 }
 
