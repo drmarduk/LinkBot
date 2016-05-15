@@ -15,6 +15,7 @@ case "$1" in
   	echo "Restarting LinkBot"
 	pkill LinkBot
 	LinkBot -nick=Datenkrake -user=Datenkrake -channel=#rumkugel -network=irc.quiteawful.net -port=6697 -host=links.knilch.net
+	;;
   *)
   	echo "Usage: /etc/init.d/linkbot {start|stop|restart}
 	exit 1
