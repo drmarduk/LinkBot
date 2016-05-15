@@ -44,7 +44,7 @@ var (
 )
 
 func StartHttp() {
-	hwd, err := os.OpenFile("access.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	hwd, err := os.OpenFile(*cfgRoot+"/access.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		panic(err)
 	}
@@ -67,7 +67,7 @@ func StartHttp() {
 
 	config := &tls.Config{MinVersion: tls.VersionTLS10}
 	server := http.Server{Addr: *srvAdress + ":443", Handler: WriteLog(handler, hwd), TLSConfig: config}
-	log.Fatal(server.ListenAndServeTLS("data/server.crt", "data/server.key"))
+	log.Fatal(server.ListenAndServeTLS(*cfgRoot+"/data/server.crt", *cfgRoot+"/data/server.key"))
 }
 
 // =============== Handler ===============
@@ -219,7 +219,7 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func staticHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "html/"+r.URL.Path[1:])
+	http.ServeFile(w, r, *cfgRoot+"/html/"+r.URL.Path[1:])
 }
 
 func statsHandler(w http.ResponseWriter, r *http.Request) {
@@ -328,7 +328,7 @@ func totalPages(query string, args ...interface{}) int {
 // =============== render HTML page functions ===============
 func renderPage(w http.ResponseWriter, tpl string, result *HttpResponse) {
 	result.Pagination.Pagination = buildPagintion(result.Pagination.CurrentPage, result.Pagination.TotalPages)
-	temp, err := template.ParseFiles("html/" + tpl)
+	temp, err := template.ParseFiles(*cfgRoot + "/html/" + tpl)
 	if err != nil {
 		log.Println(err.Error())
 		return
