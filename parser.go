@@ -28,6 +28,7 @@ var sprueche []string = []string{
 	"Kennen wir schon. (%s von %s)",
 	"Ein Zitat vom %s von %s",
 	"Frei nach Goethe: AAALT (%s von %s)",
+	"Es war einmal vor nicht allzu geraumer Zeit (%s) da gab es einen Helden (%s), der sich zur Aufgabe gemacht hat Informationen unters Volk zu bringen.",
 	"Ein Plagiat!!! (%s von %s)",
 }
 
