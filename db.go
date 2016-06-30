@@ -11,6 +11,7 @@ import (
 func (db *Db) Open() {
 	x, err := sql.Open("sqlite3", "file:"+*cfgRoot+"/data/links.db")
 	if err != nil {
+		// ze fuck i did here o.O
 		log.Println(err.Error())
 	}
 	db.C = x

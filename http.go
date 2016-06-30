@@ -225,6 +225,8 @@ func staticHandler(w http.ResponseWriter, r *http.Request) {
 func statsHandler(w http.ResponseWriter, r *http.Request) {
 	b, _ := json.Marshal(middleware.Data())
 	w.Write(b)
+
+	// do proper stats
 }
 
 // =============== Link Data retrieving stuff ===============
@@ -290,6 +292,16 @@ func getLinks(query string, args ...interface{}) (result []LinkResult, err error
 	}
 
 	return result, nil
+}
+
+func getStats() (result string, err error) {
+
+	db := Db{}
+	db.Open()
+	defer db.Close()
+
+	//query := "select * from"
+	return result, err
 }
 
 // =============== Data helper functions ===============

@@ -22,6 +22,10 @@ func StartIrc() {
 		return
 	}
 
+	// TheMarv will 180 Tage lang einen Timer, wann ich wieder
+	// Drachenlord stuff posten darf
+
+	go marv()
 	for {
 		m, status := <-ctxIrc.Out
 		if !status {
@@ -51,4 +55,18 @@ func ircMessage(channel, msg string) {
 	// PRIVMSG #test :Voting time is 600 seconds.
 	log.Println(m)
 	ctxIrc.In <- m
+}
+
+func marv() {
+	// start datum
+	var startdate time.Time = time.Date(2016, 06, 29, 0, 0, 0, 0, time.UTC)
+	var enddate time.Time = startdate.AddDate(0, 0, 180)
+
+	for {
+		time.Sleep(1000 * time.Millisecond)
+
+		if time.Now().Hour() == 0 && time.Now().Minute() == 2 {
+			ircMessage("rumkugel", "No Drachenlord content until: "+enddate.String())
+		}
+	}
 }
