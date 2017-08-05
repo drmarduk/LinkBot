@@ -84,3 +84,8 @@
 	text-decoration: none;
 	color: #444;
 }
+
+.lstRight {
+	display: inline;
+	float: right;
+}
