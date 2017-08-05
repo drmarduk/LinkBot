@@ -7,6 +7,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -21,6 +22,7 @@ type LinkResult struct {
 	Url       string
 	Timestamp time.Time
 	TimeStr   string
+	Domain    string
 }
 
 type Pages struct {
@@ -57,6 +59,7 @@ func StartHttp() {
 	mux.HandleFunc("/search/", searchFormHandler)
 	mux.HandleFunc("/stats", statsHandler)
 	mux.HandleFunc("/filter/", filterHandler)
+	mux.HandleFunc("/domain/", domainHandler)
 	mux.HandleFunc("/user/", userHandler)
 
 	handler := middleware.Handler(mux)
@@ -188,7 +191,8 @@ func filterHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func userHandler(w http.ResponseWriter, r *http.Request) {
-	var tmp string = strings.Replace(r.URL.Path, "/user/", "", 1)
+	// /user/0/username
+	tmp := strings.Replace(r.URL.Path, "/user/", "", 1)
 	httpRes := HttpResponse{}
 
 	var page, total int
@@ -205,7 +209,40 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 		page = 0
 	}
 
-	httpRes.Results, total, err = getFilterLinks(page, "user", v) // todo
+	httpRes.Results, total, err = getUserLinks(page, v) // todo
+	if err != nil {
+		log.Println("user: " + err.Error())
+	}
+
+	httpRes.Pagination.TotalPages = total
+	httpRes.Pagination.CurrentPage = page
+	httpRes.Pagination.UrlPrefix = "/user/"
+	httpRes.Pagination.UrlSuffix = "/" + v
+
+	renderPage(w, "index.html", &httpRes)
+}
+
+func domainHandler(w http.ResponseWriter, r *http.Request) {
+	// /domain/0/domain
+	tmp := strings.Replace(r.URL.Path, "/domain/", "", 1)
+	httpRes := HttpResponse{}
+
+	var page, total int
+	var err error
+	var p, v string // aktuelle page und domain
+
+	x := strings.Split(tmp, "/")
+	if len(x) == 2 {
+		p, v = x[0], x[1]
+	} else {
+		return // dann zurück
+	}
+	page, err = strconv.Atoi(p) // get current page
+	if err != nil {
+		page = 0
+	}
+
+	httpRes.Results, total, err = getDomainLinks(page, v) // todo
 	if err != nil {
 		log.Println("user: " + err.Error())
 	}
@@ -253,9 +290,24 @@ func getFilterLinks(page int, filter, term string) ([]LinkResult, int, error) {
 	return links, totalPages(" join search on links.id = search.id where $1 = $2", filter, term), err
 }
 
-//func getUserLinks(page int, user, term string) ([]LinkResult, int, error) {
-//	links, err := getLinks(" join search on links.id = search.id where user = $1 order by links.id desc limit $2, $3;", user,
-//}
+func getUserLinks(page int, user string) ([]LinkResult, int, error) {
+	links, err := getLinks(" join search on links.id = search.id where user = $1 order by links.id desc limit $2, $3;", user, (page * linksperpage), linksperpage)
+	return links, totalPages(" join search on links.id = search.id where user = $1", user), err
+}
+
+//////////
+func getContentTypeLinks(page int, mime string) ([]LinkResult, int, error) {
+	links, err := getLinks(" join search on links.id = search.id where mime = $1 order by links.id desc limit $3, $4;", mime, (page * linksperpage), linksperpage)
+	return links, totalPages(" join search on links.id = search.id where mime = $1", mime), err
+}
+
+//////////
+func getDomainLinks(page int, domain string) ([]LinkResult, int, error) {
+	links, err := getLinks(" join search on links.id = search.id where instr(links.url, $1) > 0 order by links.id desc limit $3, $4;", domain, (page * linksperpage), linksperpage)
+	return links, totalPages(" join search on links.id = search.id where instr(links.url, $1) > 0", domain), err
+}
+
+// Domain, Timeframe, user
 
 func getLinks(query string, args ...interface{}) (result []LinkResult, err error) {
 	// mind the order of $1 $2 $3!!! in your query. The matching variables have to be in the same order!!
@@ -279,16 +331,26 @@ func getLinks(query string, args ...interface{}) (result []LinkResult, err error
 	}
 
 	var id int64
-	var user, url string
+	var user, uhrl string
 	var timestamp time.Time
 
 	for db.ResultRows.Next() {
-		err = db.ResultRows.Scan(&id, &user, &url, &timestamp)
+		err = db.ResultRows.Scan(&id, &user, &uhrl, &timestamp)
 		if err != nil {
 			log.Println(err.Error())
 			continue
 		}
-		result = append(result, LinkResult{ID: id, User: user, Url: url, Timestamp: timestamp, TimeStr: timestamp.Format("02.01.2006 15:04")})
+
+		link := LinkResult{ID: id, User: user, Url: uhrl, Timestamp: timestamp, TimeStr: timestamp.Format("02.01.2006 15:04")}
+		u, err := url.Parse(link.Url)
+		if err != nil {
+			log.Printf("error while parsing url %s: %v\n", link.Url, err)
+			link.Domain = "invalid"
+		} else {
+			link.Domain = u.Host
+		}
+
+		result = append(result, link)
 	}
 
 	return result, nil

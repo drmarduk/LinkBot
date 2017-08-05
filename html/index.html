@@ -57,9 +57,12 @@
 								<div class='lstId'>{{$e.ID}}.</div>
 								<div class='lstData'>
 									<div class='lstUrl'>
-										<a href='{{$e.Url}}' target='_blank'>{{$e.Url}}</a>
+									<a href='{{$e.Url}}' target='_blank'>{{$e.Url}}</a>
+										<small>
+											(<a class='derp' href='/domain/0/{{$e.Domain}}'>{{$e.Domain}}</a>)
+										</small>
 									</div>
-									<div class='lstMeta'><img src='https://www.google.com/s2/favicons?domain={{$e.Url}}'> von {{$e.User}} am {{$e.TimeStr}}</div>
+								<div class='lstMeta'><img src='https://www.google.com/s2/favicons?domain={{$e.Url}}'> von <a class='derp' href='/user/0/{{$e.User}}'>{{$e.User}}</a> am {{$e.TimeStr}}</div>
 								</div>
 							</div>
 						</li>
