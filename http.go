@@ -24,7 +24,8 @@ type LinkResult struct {
 	Domain    string
 }
 
-type User struct {
+// NamedCounter is a key-value struct to count an element in a db
+type NamedCounter struct {
 	Name  string
 	Count int
 }
@@ -41,7 +42,8 @@ type HttpResponse struct {
 	ShowError    bool
 	ErrorMessage string
 	Results      []LinkResult
-	Usernames    []User
+	Usernames    []NamedCounter
+	Domains      []NamedCounter
 	Pagination   Pages
 }
 
@@ -273,8 +275,15 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	domains, err := statsDomain()
+	if err != nil {
+		log.Printf("error while gettings domain stats")
+		return
+	}
+
 	httpRes := HttpResponse{
 		Usernames: user,
+		Domains:   domains,
 	}
 	renderPage(w, "stats.html", &httpRes)
 	// do proper stats
@@ -370,20 +379,20 @@ func getLinks(query string, args ...interface{}) (result []LinkResult, err error
 	return result, nil
 }
 
-func statsDomain() ([]User, error) {
+func statsDomain() ([]NamedCounter, error) {
 	db := Db{}
 	db.Open()
 	defer db.Close()
 
-	query := "select user, count(*) as Count from links group by user order by Count desc;"
+	query := "select domain, count(*) as Count from links group by domain order by Count desc;"
 	err := db.Query(query)
 	if err != nil {
 		return nil, err
 	}
 
-	var result []User
+	var result []NamedCounter
 	for db.ResultRows.Next() {
-		x := User{}
+		x := NamedCounter{}
 		err := db.ResultRows.Scan(&x.Name, &x.Count)
 		if err != nil {
 			log.Printf("error while scanning row: %v\n", err)
@@ -395,7 +404,7 @@ func statsDomain() ([]User, error) {
 	return result, err
 }
 
-func statsUser() ([]User, error) {
+func statsUser() ([]NamedCounter, error) {
 	db := Db{}
 	db.Open()
 	defer db.Close()
@@ -406,9 +415,9 @@ func statsUser() ([]User, error) {
 		return nil, err
 	}
 
-	var result []User
+	var result []NamedCounter
 	for db.ResultRows.Next() {
-		x := User{}
+		x := NamedCounter{}
 		err := db.ResultRows.Scan(&x.Name, &x.Count)
 		if err != nil {
 			log.Printf("error while scanning row: %v\n", err)
