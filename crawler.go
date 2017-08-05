@@ -8,9 +8,10 @@ import (
 	"strings"
 )
 
+// StartCrawler downloads each url and inserts them in the database
 func StartCrawler() {
 	for {
-		l := <-CrawlReceiver
+		l := <-crawlReceiver
 		src, err := get(l.Url)
 		if err != nil {
 			log.Println(err.Error())
@@ -60,7 +61,7 @@ func get(url string) (LinkContent, error) {
 		return c, err
 	}
 	if len(out) == 0 {
-		return c, errors.New("Response is empty.")
+		return c, errors.New("response is empty")
 	}
 
 	c.MIME = http.DetectContentType(out)

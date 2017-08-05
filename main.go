@@ -9,8 +9,8 @@ import (
 
 var (
 	ctxIrc        *qairc.Engine
-	PostReceiver  chan (*Post)
-	CrawlReceiver chan (*Link)
+	postReceiver  chan (*Post)
+	crawlReceiver chan (*Link)
 	cfgNick       = flag.String("nick", "Datenkrake2", "Nickname")
 	cfgUser       = flag.String("user", "Datenkrake2", "Username")
 	cfgChannel    = flag.String("channel", "#g0", "Channel")
@@ -28,8 +28,8 @@ func main() {
 		return
 	}
 	//InstallTables()
-	PostReceiver = make(chan (*Post))
-	CrawlReceiver = make(chan (*Link))
+	postReceiver = make(chan (*Post))
+	crawlReceiver = make(chan (*Link))
 
 	go StartIrc()
 	go StartHttp()

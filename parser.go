@@ -34,9 +34,10 @@ var sprueche []string = []string{
 	"Ein Plagiat!!! (%s von %s)",
 }
 
+// StartParser dunno what this does
 func StartParser() error {
 	for {
-		post := <-PostReceiver
+		post := <-postReceiver
 
 		links := extractLink(post.Message)
 		for _, l := range links {
@@ -89,7 +90,7 @@ func StartParser() error {
 	}
 }
 
-func TrimSuffix(s, suffix string) string {
+func trimSuffix(s, suffix string) string {
 	if strings.HasSuffix(s, suffix) {
 		s = s[:len(s)-len(suffix)]
 	}
@@ -101,7 +102,7 @@ func extractLink(data string) []string {
 	if urlregex.MatchString(data) {
 		links := urlregex.FindAllString(data, -1)
 		for _, x := range links {
-			result = append(result, TrimSuffix(x, "/"))
+			result = append(result, trimSuffix(x, "/"))
 		}
 	}
 	return result
@@ -131,7 +132,7 @@ func addLink(link *Link) bool {
 	}
 
 	if link.Size < 10000000 { // "crawl" aka download only if < 10MB
-		CrawlReceiver <- link
+		crawlReceiver <- link
 		return true
 	}
 	log.Printf("Size exceeds limit, %d Bytes \n", link.Size)

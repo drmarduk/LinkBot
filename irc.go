@@ -4,11 +4,13 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/quiteawful/qairc"
 )
 
+// StartIrc handles all irc messages and sends them to the parser
 func StartIrc() {
 
 	ctxIrc = qairc.QAIrc(*cfgNick, *cfgNick)
@@ -22,10 +24,6 @@ func StartIrc() {
 		return
 	}
 
-	// TheMarv will 180 Tage lang einen Timer, wann ich wieder
-	// Drachenlord stuff posten darf
-
-	go marv()
 	for {
 		m, status := <-ctxIrc.Out
 		if !status {
@@ -39,34 +37,30 @@ func StartIrc() {
 			l := len(m.Args)
 			msg := m.Args[l-1]
 
+			// change the sender.nick to the fist word, when
+			// qabot answers from telegram
+			user := m.Sender.Nick
+			if m.Sender.Nick == "qabot" || strings.Contains(m.Sender.Nick, "bot") {
+				tmp := strings.Split(msg, ":")
+				if len(tmp) > 1 {
+					user = tmp[0]
+				}
+			}
+
 			p := &Post{
-				User:      m.Sender.Nick,
+				User:      user,
 				Message:   msg,
 				Timestamp: time.Now().Local(),
 			}
 
-			PostReceiver <- p
+			postReceiver <- p
 		}
 	}
 }
 
 func ircMessage(channel, msg string) {
-	var m string = fmt.Sprintf("PRIVMSG %s :%s\r\n", channel, msg)
+	m := fmt.Sprintf("PRIVMSG %s :%s\r\n", channel, msg)
 	// PRIVMSG #test :Voting time is 600 seconds.
 	log.Println(m)
 	ctxIrc.In <- m
-}
-
-func marv() {
-	// start datum
-	var startdate time.Time = time.Date(2016, 06, 29, 0, 0, 0, 0, time.UTC)
-	var enddate time.Time = startdate.AddDate(0, 0, 180)
-
-	for {
-		time.Sleep(1000 * time.Millisecond)
-
-		if time.Now().Hour() == 0 && time.Now().Minute() == 2 {
-			ircMessage("rumkugel", "No Drachenlord content until: "+enddate.String())
-		}
-	}
 }
