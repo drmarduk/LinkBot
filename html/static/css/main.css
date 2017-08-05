@@ -10,8 +10,8 @@
 }
 
 #linklist {
-	background-color: rgb(246, 246, 239);
-
+	/* background-color: rgb(246, 246, 239);
+	*/
 	margin-top: 15px;
 	margin-left: 15px;
 	margin-right: 15px;
@@ -44,7 +44,7 @@
 
 .lstItem:hover {
 	border-left: 3px solid #1FA2D6;
-	background-color: rgb(246, 246, 255);
+	/* background-color: rgb(246, 246, 255); */
 }
 
 .lstData {
@@ -85,7 +85,7 @@
 	color: #444;
 }
 
-.lstRight {
+.lstRightd {
 	display: inline;
 	float: right;
 }
