@@ -19,6 +19,7 @@ type Link struct {
 	Timestamp time.Time
 	Size      int64
 	Content   LinkContent
+	Domain    string
 }
 
 type LinkContent struct {

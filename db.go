@@ -53,6 +53,17 @@ func (db *Db) Query(query string) error {
 	return nil
 }
 
+// func (db *Db) QueryRow(queryVjj string) error {
+// 	db.Result = nil
+// 	var err error
+// 	db.ResultRows = db.C.QueryRow(query)
+// 	if err != nil {
+// 		log.Printf("error while QueryRow(%s): %v\n", query, err)
+// 		return err
+// 	}
+// 	return nil
+// }
+
 func (db *Db) Prepare(query string) error {
 	var err error
 	db.Stmt = nil
@@ -94,9 +105,11 @@ func (db *Db) QueryStmt(args ...interface{}) error {
 // Function to install tables
 func InstallTables() {
 	var tables []string = []string{
-		"CREATE TABLE IF NOT EXISTS links(id integer not null, user text, url text, time datetime, post text, mime text, primary key(id));",
+		"CREATE TABLE IF NOT EXISTS links(id integer not null, user text, url text, host text, time datetime, post text, mime text, primary key(id));",
 		"CREATE VIRTUAL TABLE IF NOT EXISTS search USING fts4(id, url, src);",
 		"CREATE INDEX IF NOT EXISTS user ON links (user ASC);",
+		"CREATE INDEX IF NOT EXISTS domain ON links (domain ASC);",
+		"CREATE INDEX IF NOT EXISTS mime ON links (mime ASC);",
 	}
 	db := &Db{}
 	db.Open()

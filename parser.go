@@ -56,6 +56,8 @@ func StartParser() error {
 				x.Url = "http://" + x.Url
 			}
 
+			x.Domain = u.Host
+
 			// check for duplicate
 			result, dup := checkDuplicate(x)
 			if dup {
@@ -113,13 +115,13 @@ func addLink(link *Link) bool {
 	db.Open()
 	defer db.Close()
 
-	err := db.Prepare("Insert into links(user, url, time, post) values($1, $2, $3, $4)")
+	err := db.Prepare("Insert into links(user, url, time, post, domain) values($1, $2, $3, $4, $5)")
 	if err != nil {
 		log.Println("addLink: " + err.Error())
 		return false
 	}
 
-	err = db.ExecuteStmt(link.User, link.Url, link.Timestamp, link.Post)
+	err = db.ExecuteStmt(link.User, link.Url, link.Timestamp, link.Post, link.Domain)
 	if err != nil {
 		log.Println(err.Error())
 		return false
