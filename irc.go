@@ -1,7 +1,7 @@
 package main
 
 import (
-	"crypto/tls"
+	//"crypto/tls"
 	"fmt"
 	"log"
 	"strings"
@@ -15,8 +15,8 @@ func StartIrc() {
 
 	ctxIrc = qairc.QAIrc(*cfgNick, *cfgNick)
 	ctxIrc.Address = *cfgNetwork + ":" + *cfgPort
-	ctxIrc.UseTLS = true
-	ctxIrc.TLSCfg = &tls.Config{InsecureSkipVerify: true}
+	ctxIrc.UseTLS = false
+	//ctxIrc.TLSCfg = &tls.Config{InsecureSkipVerify: true}
 
 	err := ctxIrc.Run()
 	if err != nil {
