@@ -33,61 +33,21 @@
 					</nav>
 				</div>
 					
-				<!-- obere Pagination will aimless so -->
-				<div id="pagination-top">
-					<ul class="uk-pagination">
-						{{$c := .Pagination.CurrentPage}}
-						{{$prefix := .Pagination.UrlPrefix}}
-						{{$suffix := .Pagination.UrlSuffix}}
-						{{range $_, $i := .Pagination.Pagination}}
-							{{if eq $i $c}}
-								<li class='uk-active'><span>{{$i}}</span></li>
-							{{else}}
-								<li><a href='{{$prefix}}{{$i}}{{$suffix}}'>{{$i}}</a></li>
-							{{end}}
-						{{end}}
-					</ul>
-				</div>
 	
 				<!-- eigentlicher Linkcontent -->
 				<ul class="uk-list uk-list-line" id="linklist">
-					{{range $i, $e := .Results}}
+					{{range $i, $e := .Usernames}}
 						<li class='lstItem'>
-							<!--<div class='lstAvatar'></div>-->
 							<div>
-								<div class='lstId'>{{$e.ID}}.</div>
+								<div class='lstId'>{{$i}}.</div>
 								<div class='lstData'>
-									<div class='lstUrl'>
-									<a href='{{$e.Url}}' target='_blank'>{{$e.Url}}</a>
-										<small>
-											(<a class='derp' href='/domain/0/{{$e.Domain}}'>{{$e.Domain}}</a>)
-										</small>
-									</div>
-								<div class='lstMeta'><img src='https://www.google.com/s2/favicons?domain={{$e.Url}}'> von <a class='derp' href='/user/0/{{$e.User}}'>{{$e.User}}</a> am {{$e.TimeStr}}</div>
+									{{ $e.Name }} - ({{ $e.Count}} Links)
 								</div>
 							</div>
 						</li>
 					{{end}}
 				</ul>
-
-
-				<!-- untere Pagination will ich so -->
-				<div id="pagination">
-					<ul class="uk-pagination">
-						{{$c := .Pagination.CurrentPage}}
-						{{$prefix := .Pagination.UrlPrefix}}
-						{{$suffix := .Pagination.UrlSuffix}}
-						{{range $_, $i := .Pagination.Pagination}}
-							{{if eq $i $c}}
-								<li class='uk-active'><span>{{$i}}</span></li>
-							{{else}}
-								<li><a href='{{$prefix}}{{$i}}{{$suffix}}'>{{$i}}</a></li>
-							{{end}}
-						{{end}}
-					</ul>
-				</div>
 			</div>
-			
 		</div>
 	</body>
 

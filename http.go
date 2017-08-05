@@ -2,7 +2,6 @@ package main
 
 import (
 	"crypto/tls"
-	"encoding/json"
 	"html/template"
 	"log"
 	"math"
@@ -25,6 +24,11 @@ type LinkResult struct {
 	Domain    string
 }
 
+type User struct {
+	Name  string
+	Count int
+}
+
 type Pages struct {
 	Pagination  []int
 	CurrentPage int
@@ -37,6 +41,7 @@ type HttpResponse struct {
 	ShowError    bool
 	ErrorMessage string
 	Results      []LinkResult
+	Usernames    []User
 	Pagination   Pages
 }
 
@@ -57,8 +62,8 @@ func StartHttp() {
 	mux.HandleFunc("/static/", staticHandler)
 	mux.HandleFunc("/wasfuer/", wasfuerHandler)
 	mux.HandleFunc("/search/", searchFormHandler)
-	mux.HandleFunc("/stats", statsHandler)
-	mux.HandleFunc("/filter/", filterHandler)
+	mux.HandleFunc("/stats", statsHandler)    // TODO: machen!
+	mux.HandleFunc("/filter/", filterHandler) // TODO: machen!
 	mux.HandleFunc("/domain/", domainHandler)
 	mux.HandleFunc("/user/", userHandler)
 
@@ -260,9 +265,18 @@ func staticHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func statsHandler(w http.ResponseWriter, r *http.Request) {
-	b, _ := json.Marshal(middleware.Data())
-	w.Write(b)
+	//b, _ := json.Marshal(middleware.Data())
+	// w.Write(b)
+	user, err := statsUser()
+	if err != nil {
+		w.Write([]byte("error while getting User"))
+		return
+	}
 
+	httpRes := HttpResponse{
+		Usernames: user,
+	}
+	renderPage(w, "stats.html", &httpRes)
 	// do proper stats
 }
 
@@ -356,13 +370,53 @@ func getLinks(query string, args ...interface{}) (result []LinkResult, err error
 	return result, nil
 }
 
-func getStats() (result string, err error) {
-
+func statsDomain() ([]User, error) {
 	db := Db{}
 	db.Open()
 	defer db.Close()
 
-	//query := "select * from"
+	query := "select user, count(*) as Count from links group by user order by Count desc;"
+	err := db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []User
+	for db.ResultRows.Next() {
+		x := User{}
+		err := db.ResultRows.Scan(&x.Name, &x.Count)
+		if err != nil {
+			log.Printf("error while scanning row: %v\n", err)
+			continue
+		}
+		result = append(result, x)
+	}
+
+	return result, err
+}
+
+func statsUser() ([]User, error) {
+	db := Db{}
+	db.Open()
+	defer db.Close()
+
+	query := "select user, count(*) as Count from links group by user order by Count desc;"
+	err := db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []User
+	for db.ResultRows.Next() {
+		x := User{}
+		err := db.ResultRows.Scan(&x.Name, &x.Count)
+		if err != nil {
+			log.Printf("error while scanning row: %v\n", err)
+			continue
+		}
+		result = append(result, x)
+	}
+
 	return result, err
 }
 
