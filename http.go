@@ -88,14 +88,13 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	httpRes := HttpResponse{}
 	var page, total int
 	var err error
-	var x string
-	if strings.Contains(r.URL.Path, ".json") {
+	if strings.HasSuffix(r.URL.Path, ".json") {
 		// is json flag and remove that .json
 		isJSONRequest = true
-		x = strings.Replace(r.URL.Path, ".json", "", -1)
 	}
 
-	x = strings.Replace(r.URL.Path, "/", "", -1)
+	x := strings.Replace(r.URL.Path, ".json", "", -1)
+	x = strings.Replace(x, "/", "", -1)
 	if x != "" {
 		page, err = strconv.Atoi(x)
 		if err != nil {
