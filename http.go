@@ -99,6 +99,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	if x != "" {
 		page, err = strconv.Atoi(x)
 		if err != nil {
+			log.Printf("error while converting current index to int setting page to zero: %v\n", err)
 			page = 0
 		}
 	}
@@ -133,6 +134,7 @@ func wasfuerHandler(w http.ResponseWriter, r *http.Request) {
 	if x != "" {
 		page, err = strconv.Atoi(x)
 		if err != nil {
+			log.Printf("error while converting current index to int setting page to zero: %v\n", err)
 			page = 0
 		}
 	}
@@ -168,6 +170,7 @@ func searchFormHandler(w http.ResponseWriter, r *http.Request) {
 
 	page, err = strconv.Atoi(p)
 	if err != nil {
+		log.Printf("error while converting current index to int setting page to zero: %v\n", err)
 		page = 0
 	}
 
@@ -201,6 +204,7 @@ func filterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	page, err = strconv.Atoi(p)
 	if err != nil {
+		log.Printf("error while converting current index to int setting page to zero: %v\n", err)
 		page = 0
 	}
 
@@ -232,6 +236,7 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	page, err = strconv.Atoi(p) // get current page
 	if err != nil {
+		log.Printf("error while converting current index to int setting page to zero: %v\n", err)
 		page = 0
 	}
 
@@ -265,6 +270,7 @@ func domainHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	page, err = strconv.Atoi(p) // get current page
 	if err != nil {
+		log.Printf("error while converting current index to int setting page to zero: %v\n", err)
 		page = 0
 	}
 
