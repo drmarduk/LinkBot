@@ -2,6 +2,8 @@ package main
 
 import (
 	"crypto/tls"
+	"encoding/json"
+	"fmt"
 	"html/template"
 	"log"
 	"math"
@@ -82,10 +84,18 @@ func StartHttp() {
 
 // =============== Handler ===============
 func homeHandler(w http.ResponseWriter, r *http.Request) {
+	isJSONRequest := false
 	httpRes := HttpResponse{}
 	var page, total int
 	var err error
-	var x string = strings.Replace(r.URL.Path, "/", "", -1)
+	var x string
+	if strings.Contains(r.URL.Path, ".json") {
+		// is json flag and remove that .json
+		isJSONRequest = true
+		x = strings.Replace(r.URL.Path, ".json", "", -1)
+	}
+
+	x = strings.Replace(r.URL.Path, "/", "", -1)
 	if x != "" {
 		page, err = strconv.Atoi(x)
 		if err != nil {
@@ -102,6 +112,15 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	httpRes.Pagination.TotalPages = total
 	httpRes.Pagination.CurrentPage = page
 	httpRes.Pagination.UrlPrefix = "/"
+	if isJSONRequest {
+		src, err := json.Marshal(httpRes)
+		if err != nil {
+			log.Printf("error while marshalling json: %v\n", err)
+			return
+		}
+		fmt.Fprintf(w, "%s", string(src))
+		return
+	}
 	renderPage(w, "index.html", &httpRes)
 }
 
