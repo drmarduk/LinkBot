@@ -316,6 +316,9 @@ func statsHandler(w http.ResponseWriter, r *http.Request) {
 
 // =============== Link Data retrieving stuff ===============
 func getHomeLinks(page int) ([]LinkResult, int, error) {
+	if page < 0 {
+		page *= -1
+	}
 	links, err := getLinks("order by id desc limit $1, $2;", (page * linksperpage), linksperpage)
 	return links, totalPages(";"), err
 }
